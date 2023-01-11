@@ -29,7 +29,7 @@ namespace tlapack
         vector_t &wr,
         vector_t &wi,
         matrix_t &Q,
-        real_type<type_t<matrix_t>> &norm ) //This final is supposed 
+        real_type<type_t<matrix_t>> *norm )
     {
         using TA = type_t<matrix_t>;
         using idx_t = size_type<matrix_t>;
