@@ -18,7 +18,7 @@ namespace tlapack
 {
     template <class matrix_t, class vector_t>
 
-        // The final parameter &norm is supposed to store the norm of A on 
+        // The final parameter *norm is supposed to store the norm of A on 
         // exit. This is to make sure we can return an actual exit
         // code instead of the hack I initially did for hqr.c
     int hqr(

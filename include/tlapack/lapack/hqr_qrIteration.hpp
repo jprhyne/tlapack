@@ -1,4 +1,4 @@
-/// @file hqr.hpp
+/// @file hqr_qrIteration.hpp
 /// @author Johnathan Rhyne, CU Denver, USA
 /// Adapted from @see https://netlib.org/eispack/hqr2.f
 //
@@ -18,11 +18,7 @@
 namespace tlapack
 {
     template <class matrix_t, class vector_t>
-
-        // The final parameter &norm is supposed to store the norm of A on 
-        // exit. This is to make sure we can return an actual exit
-        // code instead of the hack I initially did for hqr.c
-    int hqr_doubleSubDiagonalSearch(
+    int hqr_qrIteration(
         matrix_t &A,
         size_type<matrix_t> en,
         size_type<matrix_t> l,

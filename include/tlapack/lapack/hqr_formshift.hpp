@@ -1,4 +1,4 @@
-/// @file hqr.hpp
+/// @file hqr_formshift.hpp
 /// @author Johnathan Rhyne, CU Denver, USA
 /// Adapted from @see https://netlib.org/eispack/hqr2.f
 //
@@ -17,10 +17,6 @@
 namespace tlapack
 {
     template <class matrix_t, class vector_t>
-
-        // The final parameter &norm is supposed to store the norm of A on 
-        // exit. This is to make sure we can return an actual exit
-        // code instead of the hack I initially did for hqr.c
     int hqr_formshift(
         size_type<matrix_t> low,
         matrix_t &A,
