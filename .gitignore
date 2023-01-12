@@ -25,7 +25,7 @@ src/tlapack.fi
 src/blas/constants.f90
 
 # Build directories
-build*
+build/*
 
 # Visual Studio Code files
 .vscode
