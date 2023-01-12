@@ -51,9 +51,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_TYP
     std::vector<T> wi;
     //Populate A and U with random numbers
     for(idx_t i = 0; i < n; i++) {
-        idx_t start = 0;
-        if (i - 1 > 0)
-            start = i - 1;
+        idx_t start = (i - 1 > 0) ? (i-1): 0;
  	    for(int j = start; j < n; j++) {
             T val = rand_helper<T>(gen)
 	        A(i,j) = val; 
@@ -75,7 +73,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_TYP
         // This means that hqr did not converge to at some index,
         // so we print it out and terminate execution as our Schur
         // vectors will not be correct
-        printf("Did not converge at index: %e\n",-norm);
+        printf("Did not converge at index: %e\n",-retCode);
         return 1;
     }
 
@@ -113,7 +111,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_TYP
             k++;
         }
     }
-    //  check || A - Z * T * Z^T ||_F / || A ||_F
+    //  check || A - Q * U * Q^T ||_F / || A ||_F
     std::Vector<T> Qt_; auto Qt = new_matrix( Qt_, n, n);
     T normR, normA;
     normR = 0.0e+00;
@@ -123,6 +121,17 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_TYP
     // Not sure how matrix mult is done in this codebase. Wait for meeting to 
     // properly implement. The difference will be stored in a matrix called 
     // ans = A - QUQ'
+    // My best guess is the following lines do matrix mult
+    std::Vector<T> left_; auto left = new_matrix( left_, n, n);
+    std::Vector<T> rhs_; auto rhs = new_matrix( rhs_, n, n);
+    std::Vector<T> ans_; auto ans = new_matrix( ans_, n, n);
+    gemm(Op::NoTrans,Op::NoTrans,real_t;(1),Q,U,left);
+    gemm(Op::NoTrans,Op::NoTrans,real_t;(1),left,Qt,rhs);
+    for (idx_t i = 0; i < n; i++) {
+        for (idx_t j = 0; j < n; j++){
+            ans(i,j) = A(i,j) - rhs(i,j);
+        }
+    }
     for (idx_t i = 0; i < n; i++)
         for (idx_t j = 0; j < n; j++)
             normR += ans(i,j) * ans(i,j);

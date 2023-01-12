@@ -1,4 +1,4 @@
 #!/bin/env bash
-set -x
-cmake -B build -GNinja
-cmake --build build
+set -x                  # Echo the commands
+cmake -B build -GNinja  # Generate the files with Ninja
+cmake --build build     # Actually compile
