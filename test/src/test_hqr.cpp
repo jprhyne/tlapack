@@ -18,11 +18,12 @@
 
 using namespace tlapack;
 
-TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_TYPES_TO_TEST)
+TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REAL_TYPES_TO_TEST)
 {
     srand(1);
 
     rand_generator gen;
+    
 
     using matrix_t = TestType;
     using T = type_t<matrix_t>;
@@ -30,32 +31,29 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_TYP
     using range = std::pair<idx_t, idx_t>;
     typedef real_type<T> real_t;
 
-    const real_t eps = uls<real_t>();
-    const real_t tol = real_t(n * eps);
+    idx_t n;
+
+    n = GENERATE(10, 15, 20, 30);
+    const real_t eps = uroundoff<real_t>(); 
+    const T tol = T(n * eps);
 
     // Function
     Create<matrix_t> new_matrix;
 
-    const T zero(0);
-    const T one(1);
-
-    idx_t n;
-
-    n = GENERATE(10, 15, 20, 30);
 
     // Create matrices
     std::vector<T> A_; auto A = new_matrix( A_, n, n);
     std::vector<T> U_; auto U = new_matrix( U_, n, n);
-    std::Vector<T> Q_; auto Q = new_matrix( Q_, n, n);
+    std::vector<T> Q_; auto Q = new_matrix( Q_, n, n);
     std::vector<T> wr;
     std::vector<T> wi;
     //Populate A and U with random numbers
     for(idx_t i = 0; i < n; i++) {
         idx_t start = (i - 1 > 0) ? (i-1): 0;
  	    for(int j = start; j < n; j++) {
-            T val = rand_helper<T>(gen)
-	        A(i,j) = val; 
-	        U(i,j) = val; 
+            T val = rand_helper<T>(gen);
+	    A(i,j) = val; 
+	    U(i,j) = val; 
         }
     }
 
@@ -64,23 +62,23 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_TYP
         Q(i,i) = 1;
 
     //Call hqr
-    T norm = 0.0;
+    real_t norm = 0.0;
     // Do we not need something like <matrix_t, vector_t> to tell
     // the call what we are using? Or does it work automatically?
     // Some testing functions I have seen do not include this
-    int retCode = tlapack::hqr(true, 0, n-1, T, wr, wi, Q, &norm)
+    int retCode = tlapack::hqr(true, 0, n-1, U, wr, wi, Q, norm);
     if (retCode != 0) {
         // This means that hqr did not converge to at some index,
         // so we print it out and terminate execution as our Schur
         // vectors will not be correct
         printf("Did not converge at index: %e\n",-retCode);
-        return 1;
+        return;
     }
 
     // Getting here means that we have successfully ran all of 
     // hqr and got an answer, so now we check if our Schur vectors are correct
     //  check || Q' * Q - I ||_F
-    T orthZ, tmp;
+    real_t orthZ, tmp;
     orthZ = 0e+00;
     for (idx_t i = 0; i < n; i++) {
         for (idx_t j = 0; j < n; j++) {
@@ -112,7 +110,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_TYP
         }
     }
     //  check || A - Q * U * Q^T ||_F / || A ||_F
-    std::Vector<T> Qt_; auto Qt = new_matrix( Qt_, n, n);
+    std::vector<T> Qt_; auto Qt = new_matrix( Qt_, n, n);
     T normR, normA;
     normR = 0.0e+00;
     for (int i = 0; i < n; i++)
@@ -122,11 +120,11 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_TYP
     // properly implement. The difference will be stored in a matrix called 
     // ans = A - QUQ'
     // My best guess is the following lines do matrix mult
-    std::Vector<T> left_; auto left = new_matrix( left_, n, n);
-    std::Vector<T> rhs_; auto rhs = new_matrix( rhs_, n, n);
-    std::Vector<T> ans_; auto ans = new_matrix( ans_, n, n);
-    gemm(Op::NoTrans,Op::NoTrans,real_t;(1),Q,U,left);
-    gemm(Op::NoTrans,Op::NoTrans,real_t;(1),left,Qt,rhs);
+    std::vector<T> left_; auto left = new_matrix( left_, n, n);
+    std::vector<T> rhs_; auto rhs = new_matrix( rhs_, n, n);
+    std::vector<T> ans_; auto ans = new_matrix( ans_, n, n);
+    gemm(Op::NoTrans,Op::NoTrans,real_t(1),Q,U,left);
+    gemm(Op::NoTrans,Op::NoTrans,real_t(1),left,Qt,rhs);
     for (idx_t i = 0; i < n; i++) {
         for (idx_t j = 0; j < n; j++){
             ans(i,j) = A(i,j) - rhs(i,j);

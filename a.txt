@@ -1,0 +1,105 @@
+-- <T>LAPACK version 0.1.1
+-- Submodule update
+-- Could NOT find MPFR (missing: MPFR_INCLUDES MPFR_LIBRARIES MPFR_VERSION_OK) (Required is at least version "2.3.1")
+-- Could NOT find GMP (missing: GMP_INCLUDES GMP_LIBRARIES) (Required is at least version "4.2.1")
+-- Could NOT find MPFR (missing: MPFR_INCLUDES MPFR_LIBRARIES MPFR_VERSION_OK) (Required is at least version "2.3.1")
+-- Could NOT find GMP (missing: GMP_INCLUDES GMP_LIBRARIES) (Required is at least version "4.2.1")
+-- Could NOT find BLAS (missing: BLAS_LIBRARIES) 
+-- LAPACK requires BLAS
+-- Catch2 not found. Trying to fetch from https://github.com/catchorg/Catch2.git. It may take a while.
+-- Using Catch2 from https://github.com/catchorg/Catch2.git.
+-- testBLAS version 0.1.2
+-- Catch2 not found. Trying to fetch from https://github.com/catchorg/Catch2.git. It may take a while.
+-- Using Catch2 from https://github.com/catchorg/Catch2.git.
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/jprhyne/sharedFolder/CUDenver/RAShip/gitRepos/tlapack/build
+[1/2] Building CXX object test/src/CMakeFiles/test_hqr.dir/test_hqr.cpp.o
+FAILED: test/src/CMakeFiles/test_hqr.dir/test_hqr.cpp.o 
+/usr/bin/c++ -DTLAPACK_CHECK_INPUT -I../test/src/../include -I_deps/catch2-src/src/catch2/.. -Igenerated-includes -I../include -Iinclude  -MD -MT test/src/CMakeFiles/test_hqr.dir/test_hqr.cpp.o -MF test/src/CMakeFiles/test_hqr.dir/test_hqr.cpp.o.d -o test/src/CMakeFiles/test_hqr.dir/test_hqr.cpp.o -c ../test/src/test_hqr.cpp
+In file included from ../test/src/test_hqr.cpp:15:
+../include/tlapack/lapack/hqr.hpp: In instantiation of ‘int tlapack::hqr(bool, tlapack::size_type<matrixA_t>, tlapack::size_type<matrixA_t>, matrix_t&, vector_t&, vector_t&, matrix_t&, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>&) [with matrix_t = tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::ColMajor>; vector_t = std::vector<float, std::allocator<float> >; tlapack::size_type<matrixA_t> = long unsigned int; tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type> = float; typename tlapack::internal::type_trait<array_t>::type = float]’:
+../test/src/test_hqr.cpp:69:31:   required from ‘void CATCH2_INTERNAL_TEMPLATE_TEST_0() [with TestType = tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::ColMajor>]’
+../test/src/test_hqr.cpp:21:1:   required from ‘void {anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::reg_test({anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<Type>, Catch::NameAndTags) [with Type = tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::ColMajor>]’
+../test/src/test_hqr.cpp:21:1:   required from ‘{anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::CATCH2_INTERNAL_TEMPLATE_TEST_1<Types>::CATCH2_INTERNAL_TEMPLATE_TEST_1() [with Types = {{anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::ColMajor, 0> >, {anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::ColMajor, 0> >, {anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::RowMajor, 0> >, {anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::RowMajor, 0> >}]’
+../test/src/test_hqr.cpp:21:1:   required from here
+../include/tlapack/lapack/hqr.hpp:130:52: error: ‘hqr_doubleSubDiagonalSearch’ was not declared in this scope
+  130 |                     m = hqr_doubleSubDiagonalSearch(n, A, en, l, &s, x, y, w, &p, &q, &r, &zz);
+      |                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../include/tlapack/lapack/hqr.hpp:132:36: error: no matching function for call to ‘hqr_qrIteration(const idx_t&, tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::ColMajor>&, idx_t&, idx_t&, real_t*, real_t*, real_t*, real_t*, real_t*, real_t*, real_t*, idx_t&, bool&, tlapack::size_type<tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::ColMajor> >&, tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::ColMajor>&)’
+  132 |                     hqr_qrIteration(n, A, en, l, &s, &x, &y, &p, &q, &r, &zz, m, want_q, low, Q);
+      |                     ~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from ../include/tlapack/lapack/hqr.hpp:20,
+                 from ../test/src/test_hqr.cpp:15:
+../include/tlapack/lapack/hqr_qrIteration.hpp:21:9: note: candidate: ‘template<class matrix_t> int tlapack::hqr_qrIteration(matrix_t&, tlapack::size_type<matrixA_t>, tlapack::size_type<matrixA_t>, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::size_type<matrixA_t>, bool, tlapack::size_type<matrixA_t>, tlapack::size_type<matrixA_t>, matrix_t&)’
+   21 |     int hqr_qrIteration(
+      |         ^~~~~~~~~~~~~~~
+../include/tlapack/lapack/hqr_qrIteration.hpp:21:9: note:   template argument deduction/substitution failed:
+In file included from ../test/src/test_hqr.cpp:15:
+../include/tlapack/lapack/hqr.hpp:132:36: note:   deduced conflicting types for parameter ‘matrix_t’ (‘const long unsigned int’ and ‘tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::ColMajor>’)
+  132 |                     hqr_qrIteration(n, A, en, l, &s, &x, &y, &p, &q, &r, &zz, m, want_q, low, Q);
+      |                     ~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../include/tlapack/lapack/hqr.hpp: In instantiation of ‘int tlapack::hqr(bool, tlapack::size_type<matrixA_t>, tlapack::size_type<matrixA_t>, matrix_t&, vector_t&, vector_t&, matrix_t&, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>&) [with matrix_t = tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::ColMajor>; vector_t = std::vector<double, std::allocator<double> >; tlapack::size_type<matrixA_t> = long unsigned int; tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type> = double; typename tlapack::internal::type_trait<array_t>::type = double]’:
+../test/src/test_hqr.cpp:69:31:   required from ‘void CATCH2_INTERNAL_TEMPLATE_TEST_0() [with TestType = tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::ColMajor>]’
+../test/src/test_hqr.cpp:21:1:   required from ‘void {anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::reg_test({anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<Type>, Catch::NameAndTags) [with Type = tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::ColMajor>]’
+../test/src/test_hqr.cpp:21:1:   required from ‘{anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::CATCH2_INTERNAL_TEMPLATE_TEST_1<Types>::CATCH2_INTERNAL_TEMPLATE_TEST_1() [with Types = {{anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::ColMajor, 0> >, {anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::ColMajor, 0> >, {anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::RowMajor, 0> >, {anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::RowMajor, 0> >}]’
+../test/src/test_hqr.cpp:21:1:   required from here
+../include/tlapack/lapack/hqr.hpp:130:52: error: ‘hqr_doubleSubDiagonalSearch’ was not declared in this scope
+  130 |                     m = hqr_doubleSubDiagonalSearch(n, A, en, l, &s, x, y, w, &p, &q, &r, &zz);
+      |                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../include/tlapack/lapack/hqr.hpp:132:36: error: no matching function for call to ‘hqr_qrIteration(const idx_t&, tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::ColMajor>&, idx_t&, idx_t&, real_t*, real_t*, real_t*, real_t*, real_t*, real_t*, real_t*, idx_t&, bool&, tlapack::size_type<tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::ColMajor> >&, tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::ColMajor>&)’
+  132 |                     hqr_qrIteration(n, A, en, l, &s, &x, &y, &p, &q, &r, &zz, m, want_q, low, Q);
+      |                     ~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from ../include/tlapack/lapack/hqr.hpp:20,
+                 from ../test/src/test_hqr.cpp:15:
+../include/tlapack/lapack/hqr_qrIteration.hpp:21:9: note: candidate: ‘template<class matrix_t> int tlapack::hqr_qrIteration(matrix_t&, tlapack::size_type<matrixA_t>, tlapack::size_type<matrixA_t>, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::size_type<matrixA_t>, bool, tlapack::size_type<matrixA_t>, tlapack::size_type<matrixA_t>, matrix_t&)’
+   21 |     int hqr_qrIteration(
+      |         ^~~~~~~~~~~~~~~
+../include/tlapack/lapack/hqr_qrIteration.hpp:21:9: note:   template argument deduction/substitution failed:
+In file included from ../test/src/test_hqr.cpp:15:
+../include/tlapack/lapack/hqr.hpp:132:36: note:   deduced conflicting types for parameter ‘matrix_t’ (‘const long unsigned int’ and ‘tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::ColMajor>’)
+  132 |                     hqr_qrIteration(n, A, en, l, &s, &x, &y, &p, &q, &r, &zz, m, want_q, low, Q);
+      |                     ~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../include/tlapack/lapack/hqr.hpp: In instantiation of ‘int tlapack::hqr(bool, tlapack::size_type<matrixA_t>, tlapack::size_type<matrixA_t>, matrix_t&, vector_t&, vector_t&, matrix_t&, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>&) [with matrix_t = tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::RowMajor>; vector_t = std::vector<float, std::allocator<float> >; tlapack::size_type<matrixA_t> = long unsigned int; tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type> = float; typename tlapack::internal::type_trait<array_t>::type = float]’:
+../test/src/test_hqr.cpp:69:31:   required from ‘void CATCH2_INTERNAL_TEMPLATE_TEST_0() [with TestType = tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::RowMajor>]’
+../test/src/test_hqr.cpp:21:1:   required from ‘void {anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::reg_test({anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<Type>, Catch::NameAndTags) [with Type = tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::RowMajor>]’
+../test/src/test_hqr.cpp:21:1:   required from ‘{anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::CATCH2_INTERNAL_TEMPLATE_TEST_1<Types>::CATCH2_INTERNAL_TEMPLATE_TEST_1() [with Types = {{anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::ColMajor, 0> >, {anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::ColMajor, 0> >, {anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::RowMajor, 0> >, {anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::RowMajor, 0> >}]’
+../test/src/test_hqr.cpp:21:1:   required from here
+../include/tlapack/lapack/hqr.hpp:130:52: error: ‘hqr_doubleSubDiagonalSearch’ was not declared in this scope
+  130 |                     m = hqr_doubleSubDiagonalSearch(n, A, en, l, &s, x, y, w, &p, &q, &r, &zz);
+      |                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../include/tlapack/lapack/hqr.hpp:132:36: error: no matching function for call to ‘hqr_qrIteration(const idx_t&, tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::RowMajor>&, idx_t&, idx_t&, real_t*, real_t*, real_t*, real_t*, real_t*, real_t*, real_t*, idx_t&, bool&, tlapack::size_type<tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::RowMajor> >&, tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::RowMajor>&)’
+  132 |                     hqr_qrIteration(n, A, en, l, &s, &x, &y, &p, &q, &r, &zz, m, want_q, low, Q);
+      |                     ~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from ../include/tlapack/lapack/hqr.hpp:20,
+                 from ../test/src/test_hqr.cpp:15:
+../include/tlapack/lapack/hqr_qrIteration.hpp:21:9: note: candidate: ‘template<class matrix_t> int tlapack::hqr_qrIteration(matrix_t&, tlapack::size_type<matrixA_t>, tlapack::size_type<matrixA_t>, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::size_type<matrixA_t>, bool, tlapack::size_type<matrixA_t>, tlapack::size_type<matrixA_t>, matrix_t&)’
+   21 |     int hqr_qrIteration(
+      |         ^~~~~~~~~~~~~~~
+../include/tlapack/lapack/hqr_qrIteration.hpp:21:9: note:   template argument deduction/substitution failed:
+In file included from ../test/src/test_hqr.cpp:15:
+../include/tlapack/lapack/hqr.hpp:132:36: note:   deduced conflicting types for parameter ‘matrix_t’ (‘const long unsigned int’ and ‘tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::RowMajor>’)
+  132 |                     hqr_qrIteration(n, A, en, l, &s, &x, &y, &p, &q, &r, &zz, m, want_q, low, Q);
+      |                     ~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../include/tlapack/lapack/hqr.hpp: In instantiation of ‘int tlapack::hqr(bool, tlapack::size_type<matrixA_t>, tlapack::size_type<matrixA_t>, matrix_t&, vector_t&, vector_t&, matrix_t&, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>&) [with matrix_t = tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::RowMajor>; vector_t = std::vector<double, std::allocator<double> >; tlapack::size_type<matrixA_t> = long unsigned int; tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type> = double; typename tlapack::internal::type_trait<array_t>::type = double]’:
+../test/src/test_hqr.cpp:69:31:   required from ‘void CATCH2_INTERNAL_TEMPLATE_TEST_0() [with TestType = tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::RowMajor>]’
+../test/src/test_hqr.cpp:21:1:   required from ‘void {anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::reg_test({anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<Type>, Catch::NameAndTags) [with Type = tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::RowMajor>]’
+../test/src/test_hqr.cpp:21:1:   required from ‘{anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::CATCH2_INTERNAL_TEMPLATE_TEST_1<Types>::CATCH2_INTERNAL_TEMPLATE_TEST_1() [with Types = {{anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::ColMajor, 0> >, {anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::ColMajor, 0> >, {anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<tlapack::legacyMatrix<float, long unsigned int, tlapack::Layout::RowMajor, 0> >, {anonymous}::ns_CATCH2_INTERNAL_TEMPLATE_TEST_1::TypeList<tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::RowMajor, 0> >}]’
+../test/src/test_hqr.cpp:21:1:   required from here
+../include/tlapack/lapack/hqr.hpp:130:52: error: ‘hqr_doubleSubDiagonalSearch’ was not declared in this scope
+  130 |                     m = hqr_doubleSubDiagonalSearch(n, A, en, l, &s, x, y, w, &p, &q, &r, &zz);
+      |                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../include/tlapack/lapack/hqr.hpp:132:36: error: no matching function for call to ‘hqr_qrIteration(const idx_t&, tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::RowMajor>&, idx_t&, idx_t&, real_t*, real_t*, real_t*, real_t*, real_t*, real_t*, real_t*, idx_t&, bool&, tlapack::size_type<tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::RowMajor> >&, tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::RowMajor>&)’
+  132 |                     hqr_qrIteration(n, A, en, l, &s, &x, &y, &p, &q, &r, &zz, m, want_q, low, Q);
+      |                     ~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from ../include/tlapack/lapack/hqr.hpp:20,
+                 from ../test/src/test_hqr.cpp:15:
+../include/tlapack/lapack/hqr_qrIteration.hpp:21:9: note: candidate: ‘template<class matrix_t> int tlapack::hqr_qrIteration(matrix_t&, tlapack::size_type<matrixA_t>, tlapack::size_type<matrixA_t>, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::real_type<typename tlapack::internal::type_trait<array_t, int>::type>*, tlapack::size_type<matrixA_t>, bool, tlapack::size_type<matrixA_t>, tlapack::size_type<matrixA_t>, matrix_t&)’
+   21 |     int hqr_qrIteration(
+      |         ^~~~~~~~~~~~~~~
+../include/tlapack/lapack/hqr_qrIteration.hpp:21:9: note:   template argument deduction/substitution failed:
+In file included from ../test/src/test_hqr.cpp:15:
+../include/tlapack/lapack/hqr.hpp:132:36: note:   deduced conflicting types for parameter ‘matrix_t’ (‘const long unsigned int’ and ‘tlapack::legacyMatrix<double, long unsigned int, tlapack::Layout::RowMajor>’)
+  132 |                     hqr_qrIteration(n, A, en, l, &s, &x, &y, &p, &q, &r, &zz, m, want_q, low, Q);
+      |                     ~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ninja: build stopped: subcommand failed.

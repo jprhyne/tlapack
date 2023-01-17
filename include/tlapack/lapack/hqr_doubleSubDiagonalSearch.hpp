@@ -16,7 +16,7 @@
 
 namespace tlapack
 {
-    template <class matrix_t, class vector_t>
+    template <class matrix_t>
     int hqr_doubleSubDiagonalSearch(
         matrix_t &A,
         size_type<matrix_t> en,
@@ -44,7 +44,6 @@ namespace tlapack
         // Perform the checks for our arguments
         // Why is the convention to use a 'check false' as opposed to a 'check true'?
         tlapack_check_false(n != nrows(A));
-        tlapack_check_fals((idx_t)size(w) != n);
 
         idx_t m;
         for (m = en - 2; m >= 2; m--) {

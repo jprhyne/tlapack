@@ -16,7 +16,7 @@
 
 namespace tlapack
 {
-    template <class matrix_t, class vector_t>
+    template <class matrix_t>
 
     int hqr_subDiagonalSearch(
         size_type<matrix_t> low,
@@ -39,12 +39,7 @@ namespace tlapack
         // Perform the checks for our arguments
         // Why is the convention to use a 'check false' as opposed to a 'check true'?
         tlapack_check_false(n != nrows(A));
-        tlapack_check_fals((idx_t)size(w) != n);
 
-        if (want_q) {
-            // If we want the Schur Vectors, we need to make sure that Q is the right size
-            tlapack_check_false((n != ncols(Q)) or (n != nrows(Z)) );
-        }
 
         for (idx_t l = en; l > low; l--) {
             *s = fabs(A(l - 1, l - 1)) + fabs(A(l, l));
@@ -56,10 +51,7 @@ namespace tlapack
                 return l;
         }
         return low;
-        }
-
     }
-
 } // lapack
 
 #endif // TLAPACK_HQR_SUBDIAGSEARCH_HH

@@ -16,8 +16,8 @@
 
 namespace tlapack
 {
-    template <class matrix_t, class vector_t>
-    int hqr_formshift(
+    template <class matrix_t>
+    int hqr_formShift(
         size_type<matrix_t> low,
         matrix_t &A,
         size_type<matrix_t> its,
@@ -44,12 +44,7 @@ namespace tlapack
         // Perform the checks for our arguments
         // Why is the convention to use a 'check false' as opposed to a 'check true'?
         tlapack_check_false(n != nrows(A));
-        tlapack_check_fals((idx_t)size(w) != n);
 
-        if (want_q) {
-            // If we want the Schur Vectors, we need to make sure that Q is the right size
-            tlapack_check_false((n != ncols(Q)) or (n != nrows(Z)) );
-        }
 
         *x = A(en, en);
         if (l == en)

@@ -11,7 +11,13 @@
 #ifndef TLAPACK_HQR_HH
 #define TLAPACK_HQR_HH
 
+
 #include <functional>
+
+#include <tlapack/lapack/hqr_subDiagonalSearch.hpp>
+#include <tlapack/lapack/hqr_formShift.hpp>
+#include <tlapack/lapack/hqr_doubleSubDiagonalSearch.hpp>
+#include <tlapack/lapack/hqr_qrIteration.hpp>
 
 
 namespace tlapack
@@ -29,7 +35,7 @@ namespace tlapack
         vector_t &wr,
         vector_t &wi,
         matrix_t &Q,
-        real_type<type_t<matrix_t>> *norm )
+        real_type<type_t<matrix_t>> &norm )
     {
         using TA = type_t<matrix_t>;
         using idx_t = size_type<matrix_t>;
@@ -44,12 +50,13 @@ namespace tlapack
 
         // Perform the checks for our arguments
         // Why is the convention to use a 'check false' as opposed to a 'check true'?
-        tlapack_check_false(n != nrows(A));
-        tlapack_check_fals((idx_t)size(w) != n);
+        tlapack_check(n == nrows(A));
+        tlapack_check((idx_t)size(wr) == n);
+        tlapack_check((idx_t)size(wi) == n);
 
         if (want_q) {
             // If we want the Schur Vectors, we need to make sure that Q is the right size
-            tlapack_check_false((n != ncols(Q)) or (n != nrows(Z)) );
+            tlapack_check((n == ncols(Q)));
         }
 
         // Consider adding some checks for trivial cases if needed
@@ -65,14 +72,14 @@ namespace tlapack
         // int      -> idx_t
         // double*  -> matrix_t || vector_t (context dependent)
         // The * is because, I ```believe``` &norm is a ptr to a variable named norm
-        *norm = 0.0; 
+        norm = 0.0; 
         idx_t i,j,en,m,itn,its,l,retVal;
         real_t p,q,r,s,t,w,x,y,z,zz;
         // Construct the sum of the absolute elements of A and check for isolated
         // eigenvalues
         for (i = 0; i < n; i++) {
             for (j = (i == 0) ? (i):(i-1); j <= n; j++) {
-                *norm += fabs(a0(i,j)); // See if fabs is the correct absolute value function. May need to change it
+                norm += tlapack::abs(A(i,j)); // See if fabs is the correct absolute value function. May need to change it
             }
             if (i >= low && i <= igh)
                 continue;
@@ -127,7 +134,7 @@ namespace tlapack
                     break;
                 case 1:
                     // Found a single root
-                    if (want_Q)
+                    if (want_q)
                         A(en, en) = x + t;
                     wr[en] = x + t;
                     wi[en] = 0.0;
@@ -142,7 +149,7 @@ namespace tlapack
                     p = ( y - x ) / 2.0;
                     q = p * p + w;
                     zz = sqrt(fabs(q));
-                    if (want_Q) {
+                    if (want_q) {
                         A(en,en) = x + t;
                         A(en - 1, en - 1) = y + t;
                     }
@@ -163,7 +170,7 @@ namespace tlapack
                         wr[en] = (zz == 0.0) ? (wr[en - 1]) : (x - w / zz);
                         wi[en - 1] = 0.0;
                         wi[en] = 0.0;
-                        if (want_Q) {
+                        if (want_q) {
                             x = A(en, en - 1);
                             s = fabs(x) + fabs(zz);
                             p = x / s;
@@ -196,10 +203,6 @@ namespace tlapack
                 case 3:
                     // This means we failed to converge
                     return 1;
-                case default:
-                    // This should never happen unless there is a problem with 
-                    // Formshift. So do an ungraceful exit
-                    return 2;
             }
         }
         return 0;
