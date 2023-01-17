@@ -14,10 +14,10 @@
 
 #include <functional>
 
-#include <tlapack/lapack/hqr_subDiagonalSearch.hpp>
-#include <tlapack/lapack/hqr_formShift.hpp>
-#include <tlapack/lapack/hqr_doubleSubDiagonalSearch.hpp>
-#include <tlapack/lapack/hqr_qrIteration.hpp>
+#include "tlapack/lapack/hqr_subDiagonalSearch.hpp"
+#include "tlapack/lapack/hqr_formShift.hpp"
+#include "tlapack/lapack/hqr_doubleSubDiagonalSearch.hpp"
+#include "tlapack/lapack/hqr_qrIteration.hpp"
 
 
 namespace tlapack
@@ -127,9 +127,9 @@ namespace tlapack
                     // Full termination, so we need to do a QR Step
                     its += 1;
                     itn -= 1;
-                    m = hqr_doubleSubDiagonalSearch(n, A, en, l, &s, x, y, w, &p, &q, &r, &zz);
+                    m = tlapack::hqr_doubleSubDiagonalSearch(A, en, l, &s, x, y, w, &p, &q, &r, &zz);
                     // double qr step
-                    hqr_qrIteration(n, A, en, l, &s, &x, &y, &p, &q, &r, &zz, m, want_q, low, Q);
+                    hqr_qrIteration(A, en, l, &s, &x, &y, &p, &q, &r, &zz, m, want_q, low, igh, Q);
                     didQRStep = true;
                     break;
                 case 1:

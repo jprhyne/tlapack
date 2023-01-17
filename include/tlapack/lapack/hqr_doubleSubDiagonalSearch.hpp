@@ -8,10 +8,9 @@
 // <T>LAPACK is free software: you can redistribute it and/or modify it under
 // the terms of the BSD 3-Clause license. See the accompanying LICENSE file.
 
-#ifndef TLAPACK_HQR_FORMSHIFT_HH
-#define TLAPACK_HQR_FORMSHIFT_HH
+#ifndef TLAPACK_HQR_DOUBLESUBDIAGSEARCH_HH
+#define TLAPACK_HQR_DOUBLESUBDIAGSEARCH_HH
 
-#include <functional>
 
 
 namespace tlapack
@@ -58,8 +57,8 @@ namespace tlapack
             *q = *q / *s;
             *r = *r / *s;
             if (m == l) break;
-            real_t tst1 = fabs(*p) * (fabs(b0(m-1, m-1)) + fabs(*zz) + fabs(b0(m+1,m+1)));
-            real_t tst2 = tst1 + fabs(b0(m,m-1)) * (fabs(*q) + fabs(*r));
+            real_t tst1 = fabs(*p) * (fabs(A(m-1, m-1)) + fabs(*zz) + fabs(A(m+1,m+1)));
+            real_t tst2 = tst1 + fabs(A(m,m-1)) * (fabs(*q) + fabs(*r));
             if (tst1 == tst2) break;
 
         }
@@ -74,4 +73,4 @@ namespace tlapack
 
 } // lapack
 
-#endif // TLAPACK_HQR_FORMSHIFT_HH
+#endif // TLAPACK_HQR_DOUBLESUBDIAGSEARCH_HH
