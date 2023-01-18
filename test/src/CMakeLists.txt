@@ -4,6 +4,7 @@
 # <T>LAPACK is free software: you can redistribute it and/or modify it under
 # the terms of the BSD 3-Clause license. See the accompanying LICENSE file
 
+
 # Configurations
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../include" )
 link_libraries( Catch2::Catch2WithMain tlapack )

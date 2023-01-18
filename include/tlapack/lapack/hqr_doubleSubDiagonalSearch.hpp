@@ -42,7 +42,7 @@ namespace tlapack
 
         // Perform the checks for our arguments
         // Why is the convention to use a 'check false' as opposed to a 'check true'?
-        tlapack_check_false(n != nrows(A));
+        tlapack_check(n == nrows(A));
 
         idx_t m;
         for (m = en - 2; m >= 2; m--) {

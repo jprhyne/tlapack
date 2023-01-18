@@ -45,15 +45,15 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     std::vector<T> A_; auto A = new_matrix( A_, n, n);
     std::vector<T> U_; auto U = new_matrix( U_, n, n);
     std::vector<T> Q_; auto Q = new_matrix( Q_, n, n);
-    std::vector<T> wr;
-    std::vector<T> wi;
+    std::vector<T> wr(n);
+    std::vector<T> wi(n);
     //Populate A and U with random numbers
     for(idx_t i = 0; i < n; i++) {
         idx_t start = (i - 1 > 0) ? (i-1): 0;
- 	    for(int j = start; j < n; j++) {
+        for(int j = start; j < n; j++) {
             T val = rand_helper<T>(gen);
-	    A(i,j) = val; 
-	    U(i,j) = val; 
+            A(i,j) = val; 
+            U(i,j) = val; 
         }
     }
 
@@ -71,7 +71,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
         // This means that hqr did not converge to at some index,
         // so we print it out and terminate execution as our Schur
         // vectors will not be correct
-        printf("Did not converge at index: %e\n",-retCode);
+        printf("Did not converge at index: %d\n",retCode);
         return;
     }
 

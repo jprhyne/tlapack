@@ -78,8 +78,8 @@ namespace tlapack
         // Construct the sum of the absolute elements of A and check for isolated
         // eigenvalues
         for (i = 0; i < n; i++) {
-            for (j = (i == 0) ? (i):(i-1); j <= n; j++) {
-                norm += tlapack::abs(A(i,j)); // See if fabs is the correct absolute value function. May need to change it
+            for (j = (i == 0) ? (i):(i-1); j < n; j++) {
+                norm += tlapack::abs(A(i,j));
             }
             if (i >= low && i <= igh)
                 continue;
@@ -127,7 +127,7 @@ namespace tlapack
                     // Full termination, so we need to do a QR Step
                     its += 1;
                     itn -= 1;
-                    m = tlapack::hqr_doubleSubDiagonalSearch(A, en, l, &s, x, y, w, &p, &q, &r, &zz);
+                    m = hqr_doubleSubDiagonalSearch(A, en, l, &s, x, y, w, &p, &q, &r, &zz);
                     // double qr step
                     hqr_qrIteration(A, en, l, &s, &x, &y, &p, &q, &r, &zz, m, want_q, low, igh, Q);
                     didQRStep = true;
@@ -202,7 +202,7 @@ namespace tlapack
                     break;
                 case 3:
                     // This means we failed to converge
-                    return 1;
+                    return en;
             }
         }
         return 0;
