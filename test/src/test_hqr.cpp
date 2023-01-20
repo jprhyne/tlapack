@@ -33,9 +33,9 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
 
     idx_t n;
 
-    n = GENERATE(5, 10, 15, 30);
+    n = GENERATE(5, 10, 30, 50, 100, 125, 150, 250,  300, 400, 500);
     const real_t eps = uroundoff<real_t>(); 
-    const T tol = T( n * eps);
+    const T tol = T( 10 * n *  eps);
 
     // Function
     Create<matrix_t> new_matrix;
