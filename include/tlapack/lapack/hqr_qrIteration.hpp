@@ -22,13 +22,13 @@ namespace tlapack
         matrix_t &A,
         size_type<matrix_t> en,
         size_type<matrix_t> l,
-        real_type<type_t<matrix_t>> *s,
-        real_type<type_t<matrix_t>> *x,
-        real_type<type_t<matrix_t>> *y,
-        real_type<type_t<matrix_t>> *p,
-        real_type<type_t<matrix_t>> *q,
-        real_type<type_t<matrix_t>> *r,
-        real_type<type_t<matrix_t>> *zz,
+        real_type<type_t<matrix_t>> &s,
+        real_type<type_t<matrix_t>> &x,
+        real_type<type_t<matrix_t>> &y,
+        real_type<type_t<matrix_t>> &p,
+        real_type<type_t<matrix_t>> &q,
+        real_type<type_t<matrix_t>> &r,
+        real_type<type_t<matrix_t>> &zz,
         size_type<matrix_t> m,
         bool want_Q,
         size_type<matrix_t> low,
@@ -55,46 +55,46 @@ namespace tlapack
         for (k = m; k <= en - 1; k++) {
             notLast = k != en - 1;
             if (k != m) {
-                *p = A(k,k-1);
-                *q = A(k+1,k-1);
-                *r = 0.0;
+                p = A(k,k-1);
+                q = A(k+1,k-1);
+                r = 0.0;
                 if (notLast) {
-                    *r = A(k+2,k-1);
+                    r = A(k+2,k-1);
                 }
-                *x = fabs(*p) + fabs(*q) + fabs(*r);
-                if (*x == 0.0) {
+                x = tlapack::abs(p) + tlapack::abs(q) + tlapack::abs(r);
+                if (x == 0.0) {
                     continue;
                 }
-                *p = *p / *x;
-                *q = *q / *x;
-                *r = *r / *x;
+                p = p / x;
+                q = q / x;
+                r = r / x;
             }
-            real_t insideSqrt = *p * *p + *q * *q + *r * *r;
-            if (*p >= 0.0) {
-                *s = sqrt(insideSqrt);
+            real_t insideSqrt = p * p + q * q + r * r;
+            if (p >= 0.0) {
+                s = sqrt(insideSqrt);
             } else {
-                *s = -sqrt(insideSqrt);
+                s = -sqrt(insideSqrt);
             }
             if (k != m) {
-                A(k,k-1) = -*s * *x;
+                A(k,k-1) = -s * x;
             } else if (l != m) {
                 A(k,k-1) = -A(k,k-1);
             }
-            *p = *p + *s;
-            *x = *p / *s;
-            *y = *q / *s;
-            *zz = *r / *s;
-            *q = *q / *p;
-            *r = *r / *p;
+            p = p + s;
+            x = p / s;
+            y = q / s;
+            zz = r / s;
+            q = q / p;
+            r = r / p;
             if (notLast) {
                 // Try doing nothing depending on behavior
                 idx_t upperBound = (want_Q) ? n - 1 : en;
     //c     .......... row modification ..........
                 for (j = k; j <= upperBound; j++) {
-                    *p = A(k,j) + *q * A(k+1,j) + *r * A(k+2,j);
-                    A(k,j) = A(k,j) - *p * *x;
-                    A(k+1,j) = A(k+1,j) - *p * *y;
-                    A(k+2,j) = A(k+2,j) - *p * *zz;
+                    p = A(k,j) + q * A(k+1,j) + r * A(k+2,j);
+                    A(k,j) = A(k,j) - p * x;
+                    A(k+1,j) = A(k+1,j) - p * y;
+                    A(k+2,j) = A(k+2,j) - p * zz;
                 }
                 if (en <= k+3) {
                     j = en;
@@ -104,27 +104,27 @@ namespace tlapack
     //c     .......... column modification ..........
                 idx_t lowerBound = (want_Q) ? 0 : l;
                 for (i = lowerBound; i <= j; i++) {
-                    *p = *x * A(i,k) + *y * A(i,k+1) + *zz * A(i,k+2);
-                    A(i,k) = A(i,k) - *p;
-                    A(i,k+1) = A(i,k+1) - *p * *q;
-                    A(i,k+2) = A(i,k+2) - *p * *r;
+                    p = x * A(i,k) + y * A(i,k+1) + zz * A(i,k+2);
+                    A(i,k) = A(i,k) - p;
+                    A(i,k+1) = A(i,k+1) - p * q;
+                    A(i,k+2) = A(i,k+2) - p * r;
                 }
                 if (want_Q) {
     //c     .......... accumulate transformations  ..........
                     for (i = low; i <= igh; i++) {
-                        *p = *x * Q(i,k) + *y * Q(i,k+1) + *zz * Q(i,k+2);
-                        Q(i,k) = Q(i,k) - *p;
-                        Q(i, k + 1) = Q(i,k + 1) - *p * *q;
-                        Q(i, k + 2) = Q(i,k + 2) - *p * *r;
+                        p = x * Q(i,k) + y * Q(i,k+1) + zz * Q(i,k+2);
+                        Q(i,k) = Q(i,k) - p;
+                        Q(i, k + 1) = Q(i,k + 1) - p * q;
+                        Q(i, k + 2) = Q(i,k + 2) - p * r;
                     }
                 }
             } else {
     //c     .......... row modification ..........
                 idx_t upperBound = (want_Q) ? n - 1 : en;
                 for (j = k; j <= upperBound; j++) {
-                    *p = A(k,j) + *q * A(k+1,j);
-                    A(k,j) = A(k,j) - *p * *x;
-                    A(k+1,j) = A(k+1,j) - *p * *y; 
+                    p = A(k,j) + q * A(k+1,j);
+                    A(k,j) = A(k,j) - p * x;
+                    A(k+1,j) = A(k+1,j) - p * y; 
                 }
                 if (en <= k+3) {
                     j = en;
@@ -134,16 +134,16 @@ namespace tlapack
     //c     .......... column modification ..........
                 idx_t lowerBound = (want_Q) ? 0 : l;
                 for (i = lowerBound; i <= j; i++) {
-                    *p = *x * A(i,k) + *y * A(i,k+1);
-                    A(i,k) = A(i,k) - *p;
-                    A(i,k+1) = A(i,k+1) - *p * *q;
+                    p = x * A(i,k) + y * A(i,k+1);
+                    A(i,k) = A(i,k) - p;
+                    A(i,k+1) = A(i,k+1) - p * q;
                 }
                 if (want_Q) {
     //c     ...........accumulate transformations  ..........
                     for (i = low; i <= igh; i++) {
-                        *p = *x * Q(i,k) + *y * Q(i,k+1);
-                        Q(i,k) = Q(i,k) - *p;
-                        Q(i, k + 1) = Q(i,k+1) - *p * *q;
+                        p = x * Q(i,k) + y * Q(i,k+1);
+                        Q(i,k) = Q(i,k) - p;
+                        Q(i, k + 1) = Q(i,k+1) - p * q;
                     }
                 }
             }

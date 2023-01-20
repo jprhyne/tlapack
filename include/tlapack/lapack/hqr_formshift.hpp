@@ -24,11 +24,11 @@ namespace tlapack
         size_type<matrix_t> itn,
         size_type<matrix_t> en,
         size_type<matrix_t> l,
-        real_type<type_t<matrix_t>> *s,
-        real_type<type_t<matrix_t>> *t,
-        real_type<type_t<matrix_t>> *x,
-        real_type<type_t<matrix_t>> *y,
-        real_type<type_t<matrix_t>> *w )
+        real_type<type_t<matrix_t>> &s,
+        real_type<type_t<matrix_t>> &t,
+        real_type<type_t<matrix_t>> &x,
+        real_type<type_t<matrix_t>> &y,
+        real_type<type_t<matrix_t>> &w )
     {
         using TA = type_t<matrix_t>;
         using idx_t = size_type<matrix_t>;
@@ -46,24 +46,24 @@ namespace tlapack
         tlapack_check(n == nrows(A));
 
 
-        *x = A(en, en);
+        x = A(en, en);
         if (l == en)
             return 1;
-        *y = A(en - 1, en - 1);
-        *w = A(en, en - 1) * A(en - 1, en);
+        y = A(en - 1, en - 1);
+        w = A(en, en - 1) * A(en - 1, en);
         if (l == en - 1)
             return 2;
         if (itn == 0)
             return 3;
         if ((its != 10) and (itn != 20))
             return 0;
-        *t += *x;
+        t += x;
         for (idx_t i = low; i <= en; i++)
-            A(i,i) -= *x;
-        *s = fabs(A(en, en - 1)) + fabs(A(en - 1, en - 2));
-        *x = 0.75 * *s;
-        *y = *x;
-        *w = -0.4375 * *s * *s;
+            A(i,i) = A(i,i) -  x;
+        s = tlapack::abs(A(en, en - 1)) + tlapack::abs(A(en - 1, en - 2));
+        x = 0.75 * s;
+        y = x;
+        w = -0.4375 * s * s;
         return 0;
 
     }

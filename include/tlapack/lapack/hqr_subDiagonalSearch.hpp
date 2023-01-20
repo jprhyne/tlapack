@@ -23,7 +23,7 @@ namespace tlapack
         matrix_t &A,
         size_type<matrix_t> en,
         real_type<type_t<matrix_t>> norm,
-        real_type<type_t<matrix_t>> *s )
+        real_type<type_t<matrix_t>> &s )
     {
         using TA = type_t<matrix_t>;
         using idx_t = size_type<matrix_t>;
@@ -41,12 +41,12 @@ namespace tlapack
         tlapack_check(n == nrows(A));
 
 
-        for (idx_t l = en; l > low; l--) {
-            *s = fabs(A(l - 1, l - 1)) + fabs(A(l, l));
-            if (*s == 0.0)
-                *s = norm;
-            real_t tst1 = *s;
-            real_t tst2 = tst1 + fabs(A(l,l - 1));
+        for (idx_t l = en; l <= en && l > low; l--) {
+            s = tlapack::abs(A(l - 1, l - 1)) + tlapack::abs(A(l, l));
+            if (s == 0.0)
+                s = norm;
+            real_t tst1 = s;
+            real_t tst2 = tst1 + tlapack::abs(A(l,l - 1));
             if (tst1 == tst2)
                 return l;
         }

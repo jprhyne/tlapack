@@ -20,14 +20,14 @@ namespace tlapack
         matrix_t &A,
         size_type<matrix_t> en,
         size_type<matrix_t> l,
-        real_type<type_t<matrix_t>> *s,
+        real_type<type_t<matrix_t>> &s,
         real_type<type_t<matrix_t>> x,
         real_type<type_t<matrix_t>> y,
         real_type<type_t<matrix_t>> w,
-        real_type<type_t<matrix_t>> *p,
-        real_type<type_t<matrix_t>> *q,
-        real_type<type_t<matrix_t>> *r,
-        real_type<type_t<matrix_t>> *zz )
+        real_type<type_t<matrix_t>> &p,
+        real_type<type_t<matrix_t>> &q,
+        real_type<type_t<matrix_t>> &r,
+        real_type<type_t<matrix_t>> &zz )
     {
         using TA = type_t<matrix_t>;
         using idx_t = size_type<matrix_t>;
@@ -45,20 +45,20 @@ namespace tlapack
         tlapack_check(n == nrows(A));
 
         idx_t m;
-        for (m = en - 2; m >= 2; m--) {
-            *zz = A(m,m);
-            *r = x - *zz;
-            *s = y - *zz;
-            *p = (*r * *s - w) / A(m + 1, m) + A(m, m + 1);
-            *q = A(m+1,m+1) - *zz - *r - *s;
-            *r = A(m+2,m+1);
-            *s = fabs(*p) + fabs(*q) + fabs(*r);
-            *p = *p / *s;
-            *q = *q / *s;
-            *r = *r / *s;
+        for (m = en - 2; m <= en && m >= l; m--) {
+            zz = A(m,m);
+            r = x - zz;
+            s = y - zz;
+            p = (r * s - w) / A(m + 1, m) + A(m, m + 1);
+            q = A(m+1,m+1) - zz - r - s;
+            r = A(m+2,m+1);
+            s = tlapack::abs(p) + tlapack::abs(q) + tlapack::abs(r);
+            p = p / s;
+            q = q / s;
+            r = r / s;
             if (m == l) break;
-            real_t tst1 = fabs(*p) * (fabs(A(m-1, m-1)) + fabs(*zz) + fabs(A(m+1,m+1)));
-            real_t tst2 = tst1 + fabs(A(m,m-1)) * (fabs(*q) + fabs(*r));
+            real_t tst1 = tlapack::abs(p) * (tlapack::abs(A(m-1, m-1)) + tlapack::abs(zz) + tlapack::abs(A(m+1,m+1)));
+            real_t tst2 = tst1 + tlapack::abs(A(m,m-1)) * (tlapack::abs(q) + tlapack::abs(r));
             if (tst1 == tst2) break;
 
         }

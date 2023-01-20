@@ -79,6 +79,7 @@ namespace tlapack
         // eigenvalues
         for (i = 0; i < n; i++) {
             for (j = (i == 0) ? (i):(i-1); j < n; j++) {
+                real_t tmp = tlapack::abs(A(i,j));
                 norm += tlapack::abs(A(i,j));
             }
             if (i >= low && i <= igh)
@@ -102,16 +103,16 @@ namespace tlapack
         // set a flag to determine if we did a QR step, and if so we
         // reset its to be 0 as we have found another eigenvalue
         bool didQRStep = false;
-        while (en >= low) {
+        while (en >= low && en <= igh) {
             if (!didQRStep)
                 its = 0;
             didQRStep = false;
 
             // Perform a subdiagonal search to determine where the first
             // small subdiagonal element is
-            l = hqr_subDiagonalSearch(low,A,en,norm,&s);
+            l = hqr_subDiagonalSearch(low,A,en,norm,s);
             // Perform a form shift as well as check if we have found an eigenvalue
-            retVal = hqr_formShift(low, A, its, itn, en, l, &s, &t, &x, &y, &w);
+            retVal = hqr_formShift(low, A, its, itn, en, l, s, t, x, y, w);
             // In order to emulate the behavior of the fortran code, instead 
             // of jumping to the right code inside there, we instead set a
             // return value and check what it is on exit
@@ -127,9 +128,9 @@ namespace tlapack
                     // Full termination, so we need to do a QR Step
                     its += 1;
                     itn -= 1;
-                    m = hqr_doubleSubDiagonalSearch(A, en, l, &s, x, y, w, &p, &q, &r, &zz);
+                    m = hqr_doubleSubDiagonalSearch(A, en, l, s, x, y, w, p, q, r, zz);
                     // double qr step
-                    hqr_qrIteration(A, en, l, &s, &x, &y, &p, &q, &r, &zz, m, want_q, low, igh, Q);
+                    hqr_qrIteration(A, en, l, s, x, y, p, q, r, zz, m, want_q, low, igh, Q);
                     didQRStep = true;
                     break;
                 case 1:
@@ -146,6 +147,10 @@ namespace tlapack
                     // if Q is desired. (Note we only compute the Schur 
                     // form of A if Q is desired. This may be modifiable if 
                     // desired)
+                    // DEBUGGING
+                    if (en == 0)
+                        printf("en is 0 so en - 1 will be bad");
+                    // DEBUGGING
                     p = ( y - x ) / 2.0;
                     q = p * p + w;
                     zz = sqrt(fabs(q));

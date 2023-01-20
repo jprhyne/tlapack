@@ -33,9 +33,9 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
 
     idx_t n;
 
-    n = GENERATE(10, 15, 20, 30);
+    n = GENERATE(5, 10, 15, 30);
     const real_t eps = uroundoff<real_t>(); 
-    const T tol = T(n * eps);
+    const T tol = T( n * eps);
 
     // Function
     Create<matrix_t> new_matrix;
@@ -47,9 +47,15 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     std::vector<T> Q_; auto Q = new_matrix( Q_, n, n);
     std::vector<T> wr(n);
     std::vector<T> wi(n);
+    for (idx_t i = 0; i < n; i++) {
+        for(idx_t j = 0; j < n; j++) {
+            A(i,j) = T(0);
+            U(i,j) = T(0);
+        }
+    }
     //Populate A and U with random numbers
     for(idx_t i = 0; i < n; i++) {
-        idx_t start = (i - 1 > 0) ? (i-1): 0;
+        idx_t start = (i >= 1) ? (i-1): 0;
         for(int j = start; j < n; j++) {
             T val = rand_helper<T>(gen);
             A(i,j) = val; 
@@ -59,21 +65,27 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
 
     // Start Q as eye(n)
     for (idx_t i = 0; i < n; i++)
-        Q(i,i) = 1;
+        Q(i,i) = T(1);
 
+    // Open a file to print A to. We want whatever is
+    // there to be overwritten in order to let us repeat this without
+    // having to modify the file and making it easier to read
+    // in.
+    FILE *debugFile;
+    debugFile = fopen("cppMatrixFile.txt", "w");
+    fprintf(debugFile, "%d\n", n);
+    //Print A out for use with debugging C
+    for (idx_t i = 0 ; i < n; i++) {
+        for (idx_t j = 0; j < n - 1; j++) {
+            fprintf(debugFile, "%1.10le, ", A(i,j));
+        }
+        fprintf(debugFile, "%1.10le\n", A(i,n-1));
+    }
+    fclose(debugFile);
     //Call hqr
     real_t norm = 0.0;
-    // Do we not need something like <matrix_t, vector_t> to tell
-    // the call what we are using? Or does it work automatically?
-    // Some testing functions I have seen do not include this
     int retCode = tlapack::hqr(true, 0, n-1, U, wr, wi, Q, norm);
-    if (retCode != 0) {
-        // This means that hqr did not converge to at some index,
-        // so we print it out and terminate execution as our Schur
-        // vectors will not be correct
-        printf("Did not converge at index: %d\n",retCode);
-        return;
-    }
+    CHECK(retCode == 0);
 
     // Getting here means that we have successfully ran all of 
     // hqr and got an answer, so now we check if our Schur vectors are correct
@@ -94,8 +106,9 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     // Zero out below quasi diagonal elements of T
     // First, zero out everything below the 1st subdiagonal
     for (idx_t i = 0; i < n; i++) 
-        for (idx_t j = 0; j < i - 1; j++) 
-            U(i,j) = 0;
+        if (i != 0)
+            for (idx_t j = 0; j < i - 1; j++) 
+                U(i,j) = 0;
     // if eigValsImag[k]  = 0 then the sub diagonal elements need to be 0
     // If eigValsImag[k] != 0 then we have a schur block  
     idx_t k;
