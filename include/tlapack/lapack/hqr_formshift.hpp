@@ -20,10 +20,7 @@ namespace tlapack
     int hqr_formShift(
         size_type<matrix_t> low,
         matrix_t &A,
-        size_type<matrix_t> its,
-        size_type<matrix_t> itn,
         size_type<matrix_t> en,
-        size_type<matrix_t> l,
         real_type<type_t<matrix_t>> &s,
         real_type<type_t<matrix_t>> &t,
         real_type<type_t<matrix_t>> &x,
@@ -42,21 +39,8 @@ namespace tlapack
         const idx_t n = ncols(A);
 
         // Perform the checks for our arguments
-        // Why is the convention to use a 'check false' as opposed to a 'check true'?
         tlapack_check(n == nrows(A));
 
-
-        x = A(en, en);
-        if (l == en)
-            return 1;
-        y = A(en - 1, en - 1);
-        w = A(en, en - 1) * A(en - 1, en);
-        if (l == en - 1)
-            return 2;
-        if (itn == 0)
-            return 3;
-        if ((its != 10) and (itn != 20))
-            return 0;
         t += x;
         for (idx_t i = low; i <= en; i++)
             A(i,i) = A(i,i) -  x;

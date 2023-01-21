@@ -71,7 +71,6 @@ namespace tlapack
         // double   -> real_t
         // int      -> idx_t
         // double*  -> matrix_t || vector_t (context dependent)
-        // The * is because, I ```believe``` &norm is a ptr to a variable named norm
         norm = 0.0; 
         idx_t i,j,en,m,itn,its,l,retVal;
         real_t p,q,r,s,t,w,x,y,z,zz;
@@ -108,107 +107,116 @@ namespace tlapack
                 its = 0;
             didQRStep = false;
 
+            // We want to check here if we have exhausted our iterations ie if itn == 0. If so, we immediately
+            // terminate and return the index of failure
+            if (itn == 0)
+                return en;
+
+            // Creating a flag to help determine if we want to do a QR Step. We only want to do
+            // this if we did not find an eigenvalue.
+            bool foundEigenValue = false;
+
             // Perform a subdiagonal search to determine where the first
             // small subdiagonal element is
             l = hqr_subDiagonalSearch(low,A,en,norm,s);
-            // Perform a form shift as well as check if we have found an eigenvalue
-            retVal = hqr_formShift(low, A, its, itn, en, l, s, t, x, y, w);
-            // In order to emulate the behavior of the fortran code, instead 
-            // of jumping to the right code inside there, we instead set a
-            // return value and check what it is on exit
-            // if retVal did not change from 0, we went through the entire
-            // form shift section
-            // if retVal is 1, then we found a single root
-            // if retVal is 2, then we found a double root
-            // if retVal is 3, then we did not converge and terminate with error
-            // Any other value means there was an error inside formShift, and is
-            // not supported by this implementation
-            switch (retVal) {
-                case 0:
-                    // Full termination, so we need to do a QR Step
-                    its += 1;
-                    itn -= 1;
-                    m = hqr_doubleSubDiagonalSearch(A, en, l, s, x, y, w, p, q, r, zz);
-                    // double qr step
-                    hqr_qrIteration(A, en, l, s, x, y, p, q, r, zz, m, want_q, low, igh, Q);
-                    didQRStep = true;
-                    break;
-                case 1:
-                    // Found a single root
-                    if (want_q)
-                        A(en, en) = x + t;
-                    wr[en] = x + t;
+            // Check to see if we found eigenvalues based on l from the subDiagonalSearch
+            // if not, perform our form shift
+            x = A(en, en);
+            if (l == en) {
+                // This means we found a single root
+                if (want_q)
+                    A(en, en) = x + t;
+                wr[en] = x + t;
+                wi[en] = 0.0;
+                en -= 1;
+                foundEigenValue = true;
+            } else {
+                // Since in the old behavior this
+                // is only done if we have not
+                // found a single root
+                y = A(en - 1, en - 1);
+                w = A(en, en - 1) * A(en - 1, en);
+            }
+            // The above if block and this one will never execute at the same time.
+            // See: if l = en we decrement en so l = en + 1 after execution which is not en - 1
+            if (l == en - 1) {
+                // This means we found a double root
+                // We have found a double root, so we need to now
+                // determine if it's a complex or real pair then modify A and Q
+                // if Q is desired. (Note we only compute the Schur 
+                // form of A if Q is desired. This may be modifiable if 
+                // desired)
+                p = ( y - x ) / 2.0;
+                q = p * p + w;
+                zz = sqrt(fabs(q));
+                if (want_q) {
+                    A(en,en) = x + t;
+                    A(en - 1, en - 1) = y + t;
+                }
+                x = x + t;
+                if ( q < 0.0 ) {
+                    // This means we found a complex pair
+                    wr[en - 1] = x + p;
+                    wr[en] = x + p;
+                    wi[en - 1] = zz;
+                    wi[en] = -zz;
+                } else {
+                    // Otherwise we have a real pair
+                    if (p >= 0.0) 
+                        zz = p + zz;
+                    else
+                        zz = p - zz;
+                    wr[en - 1] = x + zz;
+                    wr[en] = (zz == 0.0) ? (wr[en - 1]) : (x - w / zz);
+                    wi[en - 1] = 0.0;
                     wi[en] = 0.0;
-                    en -= 1;
-                    break;
-                case 2:
-                    // We have found a double root, so we need to now
-                    // determine if it's a complex or real pair then modify A and Q
-                    // if Q is desired. (Note we only compute the Schur 
-                    // form of A if Q is desired. This may be modifiable if 
-                    // desired)
-                    // DEBUGGING
-                    if (en == 0)
-                        printf("en is 0 so en - 1 will be bad");
-                    // DEBUGGING
-                    p = ( y - x ) / 2.0;
-                    q = p * p + w;
-                    zz = sqrt(fabs(q));
                     if (want_q) {
-                        A(en,en) = x + t;
-                        A(en - 1, en - 1) = y + t;
-                    }
-                    x = x + t;
-                    if ( q < 0.0 ) {
-                        // This means we found a complex pair
-                        wr[en - 1] = x + p;
-                        wr[en] = x + p;
-                        wi[en - 1] = zz;
-                        wi[en] = -zz;
-                    } else {
-                        // Otherwise we have a real pair
-                        if (p >= 0.0) 
-                            zz = p + zz;
-                        else
-                            zz = p - zz;
-                        wr[en - 1] = x + zz;
-                        wr[en] = (zz == 0.0) ? (wr[en - 1]) : (x - w / zz);
-                        wi[en - 1] = 0.0;
-                        wi[en] = 0.0;
-                        if (want_q) {
-                            x = A(en, en - 1);
-                            s = fabs(x) + fabs(zz);
-                            p = x / s;
-                            q = zz / s;
-                            r = sqrt(p*p + q*q);
-                            p /= r;
-                            q /= r;
-                            // Row modifications
-                            for (j = en - 1; j < n; j++) {
-                                zz = A(en - 1, j);
-                                A(en - 1, j) = q * zz + p * A(en, j);
-                                A(en, j) = q * A(en, j) - p * zz;
-                            } 
-                            // Column modifications
-                            for ( i = 0; i <= en; i++) {
-                                zz = A(i, en - 1);
-                                A(i, en - 1) = q * zz + p * A(i, en);
-                                A(i, en) = q * A(i, en) - p * zz;
-                            }
-                            // Accumulate transformations
-                            for ( i = low; i <= igh; i++) {
-                                zz = Q(i, en - 1);
-                                Q(i, en - 1) = q * zz + p * Q(i, en);
-                                Q(i, en) = q * Q(i, en) - p * zz;
-                            }
+                        x = A(en, en - 1);
+                        s = fabs(x) + fabs(zz);
+                        p = x / s;
+                        q = zz / s;
+                        r = sqrt(p*p + q*q);
+                        p /= r;
+                        q /= r;
+                        // Row modifications
+                        for (j = en - 1; j < n; j++) {
+                            zz = A(en - 1, j);
+                            A(en - 1, j) = q * zz + p * A(en, j);
+                            A(en, j) = q * A(en, j) - p * zz;
+                        } 
+                        // Column modifications
+                        for ( i = 0; i <= en; i++) {
+                            zz = A(i, en - 1);
+                            A(i, en - 1) = q * zz + p * A(i, en);
+                            A(i, en) = q * A(i, en) - p * zz;
+                        }
+                        // Accumulate transformations
+                        for ( i = low; i <= igh; i++) {
+                            zz = Q(i, en - 1);
+                            Q(i, en - 1) = q * zz + p * Q(i, en);
+                            Q(i, en) = q * Q(i, en) - p * zz;
                         }
                     }
-                    en -= 2;
-                    break;
-                case 3:
-                    // This means we failed to converge
-                    return en;
+                }
+                en -= 2;
+                foundEigenValue = true;
+            } 
+            if (!foundEigenValue) {
+                // We want to potentially shift if we did not find an eigenvalue and our check
+                // must be done before the QR Step
+                // We can put this check inside of formShift if we want to support shifts on 
+                // every iteration
+                if (its % 10 == 0)
+                    hqr_formShift(low, A, en, s, t, x, y, w);
+                // We only do a QR step if we did not find an eigenvalue
+                its += 1;
+                itn -= 1;
+                m = hqr_doubleSubDiagonalSearch(A, en, l, s, x, y, w, p, q, r, zz);
+                // double qr step
+                hqr_qrIteration(A, en, l, s, x, y, p, q, r, zz, m, want_q, low, igh, Q);
+                didQRStep = true;    
             }
+
         }
         return 0;
     }
