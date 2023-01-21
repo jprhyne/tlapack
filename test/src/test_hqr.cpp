@@ -71,17 +71,6 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     // there to be overwritten in order to let us repeat this without
     // having to modify the file and making it easier to read
     // in.
-    FILE *debugFile;
-    debugFile = fopen("cppMatrixFile.txt", "w");
-    fprintf(debugFile, "%d\n", n);
-    //Print A out for use with debugging C
-    for (idx_t i = 0 ; i < n; i++) {
-        for (idx_t j = 0; j < n - 1; j++) {
-            fprintf(debugFile, "%1.10le, ", A(i,j));
-        }
-        fprintf(debugFile, "%1.10le\n", A(i,n-1));
-    }
-    fclose(debugFile);
     //Call hqr
     real_t norm = 0.0;
     int retCode = tlapack::hqr(true, 0, n-1, U, wr, wi, Q, norm);
