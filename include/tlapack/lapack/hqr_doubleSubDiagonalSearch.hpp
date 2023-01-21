@@ -15,6 +15,9 @@
 
 namespace tlapack
 {
+    /** 
+     * TODO: Determine what this function does
+     */
     template <class matrix_t>
     int hqr_doubleSubDiagonalSearch(
         matrix_t &A,

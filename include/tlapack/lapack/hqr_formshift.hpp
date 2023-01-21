@@ -16,6 +16,10 @@
 
 namespace tlapack
 {
+    /**
+     *  @brief perform a form shift on A
+     *
+     */
     template <class matrix_t>
     int hqr_formShift(
         size_type<matrix_t> low,
@@ -29,11 +33,7 @@ namespace tlapack
     {
         using TA = type_t<matrix_t>;
         using idx_t = size_type<matrix_t>;
-        // Not really sure what this is, however seems like it is asking what the type of the real 
-        // components of the elements of A, Not sure if we need this as this algorithm is only for 
-        // real matrices
         using real_t = real_type<TA>; 
-        using pair = std::pair<idx_t,idx_t>;
 
         // Grab the number of columns of A, we only work on square matrices
         const idx_t n = ncols(A);

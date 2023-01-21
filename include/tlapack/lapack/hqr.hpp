@@ -22,18 +22,58 @@
 
 namespace tlapack
 {
+    /**
+     *  @brief Computes the eigenvalues of the real upper Hessenberg matrix A and optionally the Schur Vectors
+     *
+     *  hqr takes in a real upper Hessenberg matrix A and computes the eigenvalues of it, and then if desired
+     *  we also compute the quasi-Schur form of A ie, we find Q,T s.t. A = Q * T * Q^T.
+     *  On termination, A will be destroyed so if further computations are needed based on the
+     *  original matrix A, it must be stored beforehand.
+     *
+     *  @tparam matrix_t the type of matrix of A, should be real
+     *  @tparam vector_t the type of vector that we are storing the eigenvalues in
+     *
+     *  @param[in,out] A
+     *      On input, A is our upper Hessenberg data matrix
+     *      On output, 
+     *          if want_Q, then A is the quasi-Schur (block upper triangular) of the
+     *              original data matrix.
+     *          if !want_Q, then A is destroyed and has no meaning
+     *  @param[in] low
+     *      The lower bound of the indices we are considering. A must be upper triangular from 
+     *          columns 0:low. If this is unknown then choose 0.
+     *  @param[in] igh
+     *      the upper bound of the indices we are considering. A must be upper triangular from
+     *          columns igh:(ncols(A)-1). If this is unknown, choose ncols(A) - 1.
+     *  @param[out] wr
+     *      The real parts of the eigenvalues of A
+     *  @param[out] wi
+     *      The imaginary parts of the eigenvalues of A
+     *  @param[in] want_Q
+     *      boolean value determining if the Schur vectors (stored in Q) are desired
+     *  @param[in,out] Q
+     *      On input: Q must either be the identity matrix or a unitary similarity transformation on some
+     *          matrix to get A. IE, starting with B, A and Q must satisfy B = Q*A*Q^T like the
+     *          Hessenberg reduction
+     *      On output: If Q was eye(ncols(A)), then Q contains the Schur vectors of A.
+     *          If Q was a similarity transformation, then the new Q will contain the 
+     *          Schur vectors of the original B (see on input for what B is)
+     *  @param[out] norm
+     *      The sum of the absolute elements of the upper hessenberg portion of A used for
+     *      computing the eigenvectors of A after computing the Schur vectors
+     */
     template <class matrix_t, class vector_t>
 
-        // The final parameter *norm is supposed to store the norm of A on 
+        // The final parameter &norm is supposed to store the norm of A on 
         // exit. This is to make sure we can return an actual exit
         // code instead of the hack I initially did for hqr.c
     int hqr(
-        bool want_q,
+        matrix_t &A,
         size_type<matrix_t> low,
         size_type<matrix_t> igh,
-        matrix_t &A,
         vector_t &wr,
         vector_t &wi,
+        bool want_Q,
         matrix_t &Q,
         real_type<type_t<matrix_t>> &norm )
     {
@@ -54,7 +94,7 @@ namespace tlapack
         tlapack_check((idx_t)size(wr) == n);
         tlapack_check((idx_t)size(wi) == n);
 
-        if (want_q) {
+        if (want_Q) {
             // If we want the Schur Vectors, we need to make sure that Q is the right size
             tlapack_check((n == ncols(Q)));
         }
@@ -72,7 +112,7 @@ namespace tlapack
         // int      -> idx_t
         // double*  -> matrix_t || vector_t (context dependent)
         norm = 0.0; 
-        idx_t i,j,en,m,itn,its,l,retVal;
+        idx_t i,j,en,m,itn,its,l;
         real_t p,q,r,s,t,w,x,y,z,zz;
         // Construct the sum of the absolute elements of A and check for isolated
         // eigenvalues
@@ -124,7 +164,7 @@ namespace tlapack
             x = A(en, en);
             if (l == en) {
                 // This means we found a single root
-                if (want_q)
+                if (want_Q)
                     A(en, en) = x + t;
                 wr[en] = x + t;
                 wi[en] = 0.0;
@@ -138,8 +178,8 @@ namespace tlapack
                 w = A(en, en - 1) * A(en - 1, en);
             }
             // The above if block and this one will never execute at the same time.
-            // See: if l = en we decrement en so l = en + 1 after execution which is not en - 1
-            if (l == en - 1) {
+            // See: if l = en we decrement en so l = en + 1 after the block, which is not en - 1
+            if (l  == en - 1) {
                 // This means we found a double root
                 // We have found a double root, so we need to now
                 // determine if it's a complex or real pair then modify A and Q
@@ -148,8 +188,8 @@ namespace tlapack
                 // desired)
                 p = ( y - x ) / 2.0;
                 q = p * p + w;
-                zz = sqrt(fabs(q));
-                if (want_q) {
+                zz = sqrt(tlapack::abs(q));
+                if (want_Q) {
                     A(en,en) = x + t;
                     A(en - 1, en - 1) = y + t;
                 }
@@ -170,9 +210,9 @@ namespace tlapack
                     wr[en] = (zz == 0.0) ? (wr[en - 1]) : (x - w / zz);
                     wi[en - 1] = 0.0;
                     wi[en] = 0.0;
-                    if (want_q) {
+                    if (want_Q) {
                         x = A(en, en - 1);
-                        s = fabs(x) + fabs(zz);
+                        s = tlapack::abs(x) + tlapack::abs(zz);
                         p = x / s;
                         q = zz / s;
                         r = sqrt(p*p + q*q);
@@ -213,7 +253,7 @@ namespace tlapack
                 itn -= 1;
                 m = hqr_doubleSubDiagonalSearch(A, en, l, s, x, y, w, p, q, r, zz);
                 // double qr step
-                hqr_qrIteration(A, en, l, s, x, y, p, q, r, zz, m, want_q, low, igh, Q);
+                hqr_qrIteration(A, en, l, s, x, y, p, q, r, zz, m, want_Q, low, igh, Q);
                 didQRStep = true;    
             }
 

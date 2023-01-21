@@ -17,6 +17,9 @@
 
 namespace tlapack
 {
+    /**
+     * @brief perform a double implicit QR iteration on A
+     */
     template <class matrix_t>
     int hqr_qrIteration(
         matrix_t &A,
