@@ -40,17 +40,12 @@ namespace tlapack
     {
         using TA = type_t<matrix_t>;
         using idx_t = size_type<matrix_t>;
-        // Not really sure what this is, however seems like it is asking what the type of the real 
-        // components of the elements of A, Not sure if we need this as this algorithm is only for 
-        // real matrices
         using real_t = real_type<TA>; 
-        using pair = std::pair<idx_t,idx_t>;
 
         // Grab the number of columns of A, we only work on square matrices
         const idx_t n = ncols(A);
 
         // Perform the checks for our arguments
-        // Why is the convention to use a 'check false' as opposed to a 'check true'?
         tlapack_check(n == nrows(A));
 
         idx_t i,j,k;

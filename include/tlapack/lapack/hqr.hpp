@@ -63,10 +63,6 @@ namespace tlapack
      *      computing the eigenvectors of A after computing the Schur vectors
      */
     template <class matrix_t, class vector_t>
-
-        // The final parameter &norm is supposed to store the norm of A on 
-        // exit. This is to make sure we can return an actual exit
-        // code instead of the hack I initially did for hqr.c
     int hqr(
         matrix_t &A,
         size_type<matrix_t> low,
@@ -79,17 +75,12 @@ namespace tlapack
     {
         using TA = type_t<matrix_t>;
         using idx_t = size_type<matrix_t>;
-        // Not really sure what this is, however seems like it is asking what the type of the real 
-        // components of the elements of A, Not sure if we need this as this algorithm is only for 
-        // real matrices
         using real_t = real_type<TA>; 
-        using pair = std::pair<idx_t,idx_t>;
 
         // Grab the number of columns of A, we only work on square matrices
         const idx_t n = ncols(A);
 
         // Perform the checks for our arguments
-        // Why is the convention to use a 'check false' as opposed to a 'check true'?
         tlapack_check(n == nrows(A));
         tlapack_check((idx_t)size(wr) == n);
         tlapack_check((idx_t)size(wi) == n);
@@ -101,16 +92,12 @@ namespace tlapack
 
         // Consider adding some checks for trivial cases if needed
 
-        // Some other functions create a workspace, see if this is desirable
-        // to preserve A.
-
         // Now, we actually start porting the behavior
 
         // Initialize some variables at the beginning. We use the following
         // general conversion schema
         // double   -> real_t
         // int      -> idx_t
-        // double*  -> matrix_t || vector_t (context dependent)
         norm = 0.0; 
         idx_t i,j,en,m,itn,its,l;
         real_t p,q,r,s,t,w,x,y,z,zz;
@@ -179,6 +166,8 @@ namespace tlapack
             }
             // The above if block and this one will never execute at the same time.
             // See: if l = en we decrement en so l = en + 1 after the block, which is not en - 1
+            // Even if en - 1 underflows we would have l = 0 which is not the maximal value for any 
+            // reasonable unsigned data type
             if (l  == en - 1) {
                 // This means we found a double root
                 // We have found a double root, so we need to now
@@ -245,7 +234,7 @@ namespace tlapack
                 // We want to potentially shift if we did not find an eigenvalue and our check
                 // must be done before the QR Step
                 // We can put this check inside of formShift if we want to support shifts on 
-                // every iteration
+                // every iteration or on a different about of iterations
                 if (its % 10 == 0)
                     hqr_formShift(low, A, en, s, t, x, y, w);
                 // We only do a QR step if we did not find an eigenvalue
