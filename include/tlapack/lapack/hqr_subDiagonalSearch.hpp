@@ -11,9 +11,6 @@
 #ifndef TLAPACK_HQR_SUBDIAGSEARCH_HH
 #define TLAPACK_HQR_SUBDIAGSEARCH_HH
 
-#include <functional>
-
-
 namespace tlapack
 {
     /**

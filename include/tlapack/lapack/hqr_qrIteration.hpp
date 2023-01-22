@@ -11,9 +11,7 @@
 #ifndef TLAPACK_HQR_QRITERATION_HH
 #define TLAPACK_HQR_QRITERATION_HH
 
-#include <functional>
 #include <stdbool.h>
-
 
 namespace tlapack
 {

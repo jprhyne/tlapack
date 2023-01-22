@@ -11,9 +11,6 @@
 #ifndef TLAPACK_HQR_FORMSHIFT_HH
 #define TLAPACK_HQR_FORMSHIFT_HH
 
-#include <functional>
-
-
 namespace tlapack
 {
     /**
