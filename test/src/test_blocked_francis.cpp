@@ -104,7 +104,7 @@ TEMPLATE_TEST_CASE("Multishift QR", "[eigenvalues][multishift_qr]", TLAPACK_TYPE
             for (idx_t i = 0; i < n; ++i)
                 A(i, j) = rand_helper<T>(gen);
 
-        // Hessenberg factorization
+        // Hessenberg reduction
         std::vector<T> tau(n);
         gehrd(0, n, A, tau);
 

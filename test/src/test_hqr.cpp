@@ -79,6 +79,8 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     // Getting here means that we have successfully ran all of 
     // hqr and got an answer, so now we check if our Schur vectors are correct
     //  check || Q' * Q - I ||_F
+    //  TODO: Do this check with herk and lanhe
+    //  TODO: Thijs has done this
     real_t orthZ, tmp;
     orthZ = 0e+00;
     for (idx_t i = 0; i < n; i++) {
