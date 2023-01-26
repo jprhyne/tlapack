@@ -14,6 +14,9 @@
 
 #include <tlapack/lapack/hqr.hpp>
 
+#include <tlapack/lapack/lacpy.hpp>
+#include <tlapack/lapack/lange.hpp>
+
 // Auxiliary routines
 
 using namespace tlapack;
@@ -37,6 +40,9 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     const real_t eps = uroundoff<real_t>(); 
     const T tol = T( 10 * n *  eps);
 
+    T zero = T(0);
+    T one = T(1);
+
     // Function
     Create<matrix_t> new_matrix;
 
@@ -49,8 +55,8 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     std::vector<T> wi(n);
     for (idx_t i = 0; i < n; i++) {
         for(idx_t j = 0; j < n; j++) {
-            A(i,j) = T(0);
-            U(i,j) = T(0);
+            A(i,j) = zero;
+            U(i,j) = zero;
         }
     }
     //Populate A and U with random numbers
@@ -65,32 +71,19 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
 
     // Start Q as eye(n)
     for (idx_t i = 0; i < n; i++)
-        Q(i,i) = T(1);
+        Q(i,i) = one;
 
-    // Open a file to print A to. We want whatever is
-    // there to be overwritten in order to let us repeat this without
-    // having to modify the file and making it easier to read
-    // in.
     //Call hqr
-    real_t norm = 0.0;
+    real_t norm = real_t(zero);
     int retCode = tlapack::hqr(U, 0, n - 1, wr, wi, true, Q, norm);
     CHECK(retCode == 0);
 
     // Getting here means that we have successfully ran all of 
     // hqr and got an answer, so now we check if our Schur vectors are correct
     //  check || Q' * Q - I ||_F
-    real_t orthZ, tmp;
-    orthZ = 0e+00;
-    for (idx_t i = 0; i < n; i++) {
-        for (idx_t j = 0; j < n; j++) {
-            tmp = ( i == j ) ? 1.0e+00 : 0.00e+00;
-            for (idx_t k = 0; k < n; k++) {
-                tmp -= Q(k,i)*Q(k,j);
-            }
-            orthZ += tmp * tmp;
-        }
-    }
-    orthZ = sqrt( orthZ );
+    std::vector<T> res_; auto res = new_matrix( res_, n, n );
+    auto orthZ = check_orthogonality(Q,res);
+
     CHECK(orthZ <= tol);
     // Zero out below quasi diagonal elements of T
     // First, zero out everything below the 1st subdiagonal
@@ -112,37 +105,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
         }
     }
     //  check || A - Q * U * Q^T ||_F / || A ||_F
-    std::vector<T> Qt_; auto Qt = new_matrix( Qt_, n, n);
-    T normR, normA;
-    normR = 0.0e+00;
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
-            Qt(i,j) = Q(j,i);
-    // Not sure how matrix mult is done in this codebase. Wait for meeting to 
-    // properly implement. The difference will be stored in a matrix called 
-    // ans = A - QUQ'
-    // My best guess is the following lines do matrix mult
-    std::vector<T> left_; auto left = new_matrix( left_, n, n);
-    std::vector<T> rhs_; auto rhs = new_matrix( rhs_, n, n);
-    std::vector<T> ans_; auto ans = new_matrix( ans_, n, n);
-    gemm(Op::NoTrans,Op::NoTrans,real_t(1),Q,U,left);
-    gemm(Op::NoTrans,Op::NoTrans,real_t(1),left,Qt,rhs);
-    for (idx_t i = 0; i < n; i++) {
-        for (idx_t j = 0; j < n; j++){
-            ans(i,j) = A(i,j) - rhs(i,j);
-        }
-    }
-    for (idx_t i = 0; i < n; i++)
-        for (idx_t j = 0; j < n; j++)
-            normR += ans(i,j) * ans(i,j);
-    normR = sqrt( normR );
-    normA = 0.0e+00;
-    for (idx_t i = 0; i < n; i++) {
-        for (idx_t j = 0; j < n; j++) {
-            normA += A(i,j) * A(i,j) ;
-        }
-    }
-    normA = sqrt( normA );
-
-    CHECK(normR <= tol * normA);
+    auto normA = lange(tlapack::frob_norm, A);
+    auto sim_res_norm = check_similarity_transform(A,Q,U);
+    CHECK(sim_res_norm <= tol * normA);
 }

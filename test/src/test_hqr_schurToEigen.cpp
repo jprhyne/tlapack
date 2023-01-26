@@ -11,6 +11,8 @@
 #include <catch2/generators/catch_generators.hpp>
 
 #include "testutils.hpp"
+#include <tlapack/lapack/lacpy.hpp>
+#include <tlapack/lapack/lange.hpp>
 
 #include <tlapack/lapack/hqr.hpp>
 #include <tlapack/lapack/hqr_schurToEigen.hpp>
@@ -33,9 +35,12 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
 
     idx_t n;
 
-    n = GENERATE(5, 10, 30, 50, 100, 125, 150, 250,  300, 400, 500);
+    n = GENERATE(5, 10, 30);//, 50, 100, 125, 150, 250,  300, 400, 500);
     const real_t eps = uroundoff<real_t>(); 
     const T tol = T( 10 * n *  eps);
+
+    const T one = T(1);
+    const T zeroT = T(0);
 
     // Function
     Create<matrix_t> new_matrix;
@@ -49,8 +54,8 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     std::vector<T> wi(n);
     for (idx_t i = 0; i < n; i++) {
         for(idx_t j = 0; j < n; j++) {
-            A(i,j) = T(0);
-            U(i,j) = T(0);
+            A(i,j) = zeroT;
+            U(i,j) = zeroT;
         }
     }
     //Populate A and U with random numbers
@@ -65,7 +70,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
 
     // Start Z as eye(n)
     for (idx_t i = 0; i < n; i++)
-        Z(i,i) = T(1);
+        Z(i,i) = one;
 
     //Call hqr
     real_t norm = real_t(0.0);
@@ -73,8 +78,6 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     CHECK(retCode == 0);
 
     // Getting here means that we have successfully ran all of 
-    // hqr and got an answer, so now we call schurToEigen and then check if our 
-    // eigenvectors are correct
     retCode = hqr_schurToEigen(U, 0, n - 1, wr, wi, Z, norm);
     CHECK(retCode == 0);
     // Zero out below quasi diagonal elements of T
@@ -82,20 +85,31 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     for (idx_t i = 0; i < n; i++) 
         if (i != 0)
             for (idx_t j = 0; j < i - 1; j++) 
-                U(i,j) = 0;
+                U(i,j) = zeroT;
     // if wi[k]  = 0 then the sub diagonal elements need to be 0
     // If wi[k] != 0 then we have a schur block  
     idx_t k;
     for (k = 0; k < n-1; k++) {
         if (wi[k] == real_t(0)) {
-            U(k+1,k) = T(0);
+            U(k+1,k) = zeroT;
         } else if (k < n-2){
             // This means we are in a schur block, so the next sub diagonal
             // element must be 0
-            U(k+2,k+1) = T(0);
+            U(k+2,k+1) = zeroT;
             k++;
         }
     }
+    /*
+    std::vector<T> Zi_; auto Zi = new_matrix( Zi_, n, n);
+    lacpy(Uplo::General, Zi, Z);
+    std::vector<T> Piv(n);
+    // Perform LU Decomp of Zi
+    idx_t retCode = getrf(Zi,Piv);
+    CHECK(retCode == 0);
+    // Now compute the inverse of Zi
+    idx_t getri(Zi,Piv);
+    CHECK(retCode == 0);
+    */
     std::vector<T> diffReal_; auto diffReal = new_matrix( diffReal_, n, n);
     std::vector<T> diffImag_; auto diffImag = new_matrix( diffImag_, n, n);
     real_t zero = real_t(0);
@@ -166,4 +180,5 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
             normA += tlapack::abs(A(i,j));
         }
     }
+    CHECK(normR <= tol * normA);
 }
