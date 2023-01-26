@@ -88,8 +88,8 @@ namespace tlapack
      *
      * @return frobenius norm of res
      *
-     * @param[in] Q m by n (almost) orthogonal matrix
-     * @param[out] res n by n matrix as defined above
+     * @param[in] Q m-by-n (almost) orthogonal matrix
+     * @param[out] res n-by-n (or m-by-m) matrix as defined above
      *
      * @ingroup auxiliary
      */
