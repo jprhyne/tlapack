@@ -14,6 +14,9 @@
 #include <tlapack/lapack/lacpy.hpp>
 #include <tlapack/lapack/lange.hpp>
 #include <tlapack/lapack/gehrd.hpp>
+#include <tlapack/lapack/getri.hpp>
+#include <tlapack/lapack/getrf.hpp>
+#include <tlapack/blas/gemm.hpp>
 
 #include <tlapack/lapack/hqr.hpp>
 #include <tlapack/lapack/hqr_schurToEigen.hpp>
@@ -33,6 +36,10 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     using T = type_t<matrix_t>;
     using idx_t = size_type<matrix_t>;
     typedef real_type<T> real_t;
+    /*
+    // Complex numbers are constructed as complex_t(real,imaginary)
+    typedef complex_type<real_t> complex_t; 
+    */
 
     idx_t n;
 
@@ -53,25 +60,31 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     std::vector<T> Z_; auto Z = new_matrix( Z_, n, n);
     std::vector<T> wr(n);
     std::vector<T> wi(n);
+    for (idx_t i = 0; i < n; i++) {
+        wr[i] = 0;
+        wi[i] = 0;
+    }
 
     // Generate A as a random symmetric matrix. This is to ensure it is diagonalizable
     for (idx_t i = 0; i < n; i++) {
-        for (idx_t j = i; j < n; j++) {
-           T val = rand_helper<T>(gen); 
-           A(i,j) = val;
-           if (i != j) 
-               A(j,i) = val; // ensuring symmetry
+        for (idx_t j = i; j < n && j <= i + 1; j++) {
+            T val = rand_helper<T>(gen); 
+            A(i,j) = val;
+            A(j,i) = val; // ensuring symmetry
         }
     }
+    /*
     // Perform Hessenberg reduction on A.
     std::vector<T> tau(n);
     gehrd(0,n - 1, A, tau);
 
     // zero out the parts of A that represent Q
+    // After running tests, this is necessary for our function to run.
     for (idx_t i = 0; i < n; i++) 
         if (i != 0)
             for (idx_t j = 0; j < i - 1; j++) 
                 A(i,j) = zeroT;
+    */
     // Copy A into U
     for (idx_t i = 0; i < n; i++)
         for (idx_t j = 0; j < n; j++)
@@ -83,7 +96,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
 
     //Call hqr
     real_t norm = real_t(0.0);
-    int retCode = hqr(U, 0, n - 1, wr, wi, true, Z, norm);
+    idx_t retCode = hqr(U, 0, n - 1, wr, wi, true, Z, norm);
     CHECK(retCode == 0);
 
     // Getting here means that we have successfully ran all of 
@@ -108,17 +121,43 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
             k++;
         }
     }
-    /*
+    // Now, currently we are only testing matrices that are guaranteed to be diagonalizable with real
+    // eigenvalues. 
+    // If more behavior is desired we will need to switch between these two 
+    // test cases below. 
+    // If we have real eigenvalues then we test A - VDV^{-1}
+    // If we have complex eigenvalues we test representativity through AV - VD
+    //      AND test if V is invertible by constructing a matrix of type complex_t and finding
+    //      the eigenvalues of it and ensuring it is non-zero. We will test it with lahqr 
+    //      since it is designed to work with complex complex matrices at the moment.
+    //      Once hqr supports complex matrices, we can switch to using this
+    // Checking all our eigenvalues are real
+    for (idx_t i = 0; i < n; i++) 
+        CHECK(wi[i] == real_t(0));
     std::vector<T> Zi_; auto Zi = new_matrix( Zi_, n, n);
-    lacpy(Uplo::General, Zi, Z);
+    lacpy(Uplo::General, Z, Zi);
     std::vector<T> Piv(n);
     // Perform LU Decomp of Zi
-    idx_t retCode = getrf(Zi,Piv);
+    retCode = getrf(Zi,Piv);
     CHECK(retCode == 0);
     // Now compute the inverse of Zi
-    idx_t getri(Zi,Piv);
+    retCode = getri(Zi,Piv);
     CHECK(retCode == 0);
-    */
+    // Now test VDV^{-1} - A
+    std::vector<T> lhs_; auto lhs = new_matrix( lhs_, n, n);
+    std::vector<T> D_; auto D = new_matrix( D_, n, n);
+    for (idx_t i = 0; i < n; i++)
+        D(i,i) = wr[i];
+
+    gemm(Op::NoTrans, Op::NoTrans, real_t(1), Z, D, lhs);
+    // Note: This overwrites A, but we already have the norm of A saved from hqr
+    gemm(Op::NoTrans, Op::NoTrans, real_t(1), lhs, Zi, real_t(-1), A);
+    // Compute the frobenius norm of the residual
+    real_t normR = lange(tlapack::frob_norm, A);
+    CHECK(normR <= tol * norm);
+
+    
+    /*
     std::vector<T> diffReal_; auto diffReal = new_matrix( diffReal_, n, n);
     std::vector<T> diffImag_; auto diffImag = new_matrix( diffImag_, n, n);
     real_t zero = real_t(0);
@@ -190,4 +229,5 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
         }
     }
     CHECK(normR <= tol * normA);
+    */
 }

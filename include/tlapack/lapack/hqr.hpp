@@ -154,7 +154,7 @@ namespace tlapack
                 if (want_Q)
                     A(en, en) = x + t;
                 wr[en] = x + t;
-                wi[en] = 0.0;
+                wi[en] = real_t(0.0);
                 en -= 1;
                 foundEigenValue = true;
             } else {
@@ -235,7 +235,7 @@ namespace tlapack
                 // must be done before the QR Step
                 // We can put this check inside of formShift if we want to support shifts on 
                 // every iteration or on a different about of iterations
-                if (its % 10 == 0)
+                if (its % 10 == 0 && its > 0)
                     hqr_formShift(low, A, en, s, t, x, y, w);
                 // We only do a QR step if we did not find an eigenvalue
                 its += 1;

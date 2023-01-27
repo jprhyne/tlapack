@@ -61,10 +61,10 @@ namespace tlapack
 
         }
         for (idx_t i = m + 2; i <= en; i++) {
-            A(i, i - 2) = 0.0;
+            A(i, i - 2) = real_t(0.0);
             if (i == m + 2)
                 continue;
-            A(i, i - 3) = 0.0;
+            A(i, i - 3) = real_t(0.0);
         }
         return m;
     }

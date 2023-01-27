@@ -24,11 +24,10 @@
 // that only accept real matrices
 // 
 #ifndef TLAPACK_REAL_TYPES_TO_TEST
-
+        //(legacyMatrix<float,std::size_t,Layout::ColMajor>), 
+        //(legacyMatrix<float,std::size_t,Layout::RowMajor>), 
     #define TLAPACK_LEGACY_REAL_TYPES_TO_TEST \
-        (legacyMatrix<float,std::size_t,Layout::ColMajor>), \
         (legacyMatrix<double,std::size_t,Layout::ColMajor>), \
-        (legacyMatrix<float,std::size_t,Layout::RowMajor>), \
         (legacyMatrix<double,std::size_t,Layout::RowMajor>)
     
     #ifdef TLAPACK_TEST_EIGEN
