@@ -13,6 +13,7 @@
 #include "testutils.hpp"
 #include <tlapack/lapack/lacpy.hpp>
 #include <tlapack/lapack/lange.hpp>
+#include <tlapack/lapack/gehrd.hpp>
 
 #include <tlapack/lapack/hqr.hpp>
 #include <tlapack/lapack/hqr_schurToEigen.hpp>
@@ -53,21 +54,29 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     std::vector<T> Z_; auto Z = new_matrix( Z_, n, n);
     std::vector<T> wr(n);
     std::vector<T> wi(n);
+
+    // Generate A as a random symmetric matrix. This is to ensure it is diagonalizable
     for (idx_t i = 0; i < n; i++) {
-        for(idx_t j = 0; j < n; j++) {
-            A(i,j) = zeroT;
-            U(i,j) = zeroT;
+        for (idx_t j = i; j < n; j++) {
+           T val = rand_helper<T>(gen); 
+           A(i,j) = val;
+           if (i != j) 
+               A(j,i) = val; // ensuring symmetry
         }
     }
-    //Populate A and U with random numbers
-    for(idx_t i = 0; i < n; i++) {
-        idx_t start = (i >= 1) ? (i-1): 0;
-        for(idx_t j = start; j < n; j++) {
-            T val = rand_helper<T>(gen);
-            A(i,j) = val; 
-            U(i,j) = val; 
-        }
-    }
+    // Perform Hessenberg reduction on A.
+    std::vector<T> tau(n);
+    gehrd(0,n - 1, A, tau);
+
+    // zero out the parts of A that represent Q
+    for (idx_t i = 0; i < n; i++) 
+        if (i != 0)
+            for (idx_t j = 0; j < i - 1; j++) 
+                A(i,j) = zeroT;
+    // Copy A into U
+    for (idx_t i = 0; i < n; i++)
+        for (idx_t j = 0; j < n; j++)
+            U(i,j) = A(i,j);
 
     // Start Z as eye(n)
     for (idx_t i = 0; i < n; i++)
