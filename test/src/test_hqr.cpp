@@ -81,26 +81,9 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     // Getting here means that we have successfully ran all of 
     // hqr and got an answer, so now we check if our Schur vectors are correct
     //  check || Q' * Q - I ||_F
-<<<<<<< HEAD
     std::vector<T> res_; auto res = new_matrix( res_, n, n );
     auto orthZ = check_orthogonality(Q,res);
-
-=======
-    //  TODO: Do this check with herk and lanhe
-    //  TODO: Thijs has done this
-    real_t orthZ, tmp;
-    orthZ = 0e+00;
-    for (idx_t i = 0; i < n; i++) {
-        for (idx_t j = 0; j < n; j++) {
-            tmp = ( i == j ) ? 1.0e+00 : 0.00e+00;
-            for (idx_t k = 0; k < n; k++) {
-                tmp -= Q(k,i)*Q(k,j);
-            }
-            orthZ += tmp * tmp;
-        }
-    }
-    orthZ = sqrt( orthZ );
->>>>>>> db6c676628c2507a62046dc6de1bc25f767a8a64
+    
     CHECK(orthZ <= tol);
     // Zero out below quasi diagonal elements of T
     // First, zero out everything below the 1st subdiagonal

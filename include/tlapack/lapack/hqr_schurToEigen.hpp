@@ -74,7 +74,7 @@ namespace tlapack
                         w = U(i,i) - p;
                         r = zero;
                         for (idx_t j = m; j <= en; j++)
-                            r += U(i,j) * U(i,j);
+                            r += U(i,j) * U(j,en);
                         if (wi[i] < zero) {
                             zz = w;
                             s = r;
@@ -209,6 +209,7 @@ namespace tlapack
             for (idx_t j = 0; j < n; j++)
                 Z(i,j) = U(i,j);
         }
+        // This may be able to be refactored into smarter matrix multiplication
         for (idx_t j = n - 1; j >= low && j <= n - 1; j--) {
             m = j;
             if (m > igh)
