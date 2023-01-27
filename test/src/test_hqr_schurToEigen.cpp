@@ -38,8 +38,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
 
     n = GENERATE(5, 10, 30, 50, 100, 125, 150, 250,  300, 400, 500);
     const real_t eps = uroundoff<real_t>(); 
-    // Using the same tolerance as Thjis' tests
-    const T tol = T( 100 * n *  eps);
+    const T tol = T( 10 * n *  eps);
 
     const T one = T(1);
     const T zeroT = T(0);
