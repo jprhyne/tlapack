@@ -40,6 +40,8 @@ namespace tlapack
         using idx_t = size_type<matrix_t>;
         using real_t = real_type<TA>; 
 
+        real_t zero = real_t(0);
+
         // Grab the number of columns of A, we only work on square matrices
         const idx_t n = ncols(A);
 
@@ -53,12 +55,12 @@ namespace tlapack
             if (k != m) {
                 p = A(k,k-1);
                 q = A(k+1,k-1);
-                r = 0.0;
+                r = zero;
                 if (notLast) {
                     r = A(k+2,k-1);
                 }
                 x = tlapack::abs(p) + tlapack::abs(q) + tlapack::abs(r);
-                if (x == 0.0) {
+                if (x == zero) {
                     continue;
                 }
                 p = p / x;
@@ -66,7 +68,7 @@ namespace tlapack
                 r = r / x;
             }
             real_t insideSqrt = p * p + q * q + r * r;
-            if (p >= 0.0) {
+            if (p >= zero) {
                 s = sqrt(insideSqrt);
             } else {
                 s = -sqrt(insideSqrt);

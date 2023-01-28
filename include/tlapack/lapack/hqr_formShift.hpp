@@ -32,6 +32,9 @@ namespace tlapack
         using idx_t = size_type<matrix_t>;
         using real_t = real_type<TA>; 
 
+        real_t constant1 = real_t(0.75);
+        real_t constant2 = real_t(-0.4375);
+
         // Grab the number of columns of A, we only work on square matrices
         const idx_t n = ncols(A);
 
@@ -42,9 +45,9 @@ namespace tlapack
         for (idx_t i = low; i <= en; i++)
             A(i,i) = A(i,i) -  x;
         s = tlapack::abs(A(en, en - 1)) + tlapack::abs(A(en - 1, en - 2));
-        x = 0.75 * s;
+        x = constant1 * s;
         y = x;
-        w = -0.4375 * s * s;
+        w = constant2 * s * s;
         return 0;
 
     }

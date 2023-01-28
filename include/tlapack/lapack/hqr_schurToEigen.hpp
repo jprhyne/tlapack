@@ -43,20 +43,19 @@ namespace tlapack
 
         // Now, we actually start porting the behavior
 
-        // Initialize some variables at the beginning. We use the following
-        // general conversion schema
-        // double   -> real_t
-        // int      -> idx_t
+        // Initialize some variables at the beginning.
         idx_t en,m;
         real_t p,q,w,r,zz,s,t,tst1,tst2,x,y,ra,sa,vr,vi;
         real_t zero = real_t(0);
         real_t one = real_t(1);
+        real_t two = real_t(2);
+        real_t scalingFactor = real_t(0.01);
 
         if (norm < zero) {
             tlapack_error(1,"Norm cannot be negative. Check the value then call again");
             return 1;
         } 
-        if (norm == 0) {
+        if (norm == zero) {
             tlapack_error(2,"The norm is 0. Ensure U is actually the 0 matrix. If so, nothing needs to be done");
             return 2;
         }
@@ -87,7 +86,7 @@ namespace tlapack
                                 tst1 = norm;
                                 t = tst1;
                                 do {
-                                    t *= real_t(0.01);
+                                    t *= scalingFactor;
                                     tst2 = norm + t;
                                 } while (tst2 >= tst1);
                             }
@@ -120,8 +119,8 @@ namespace tlapack
                 //last vector component chosen imaginary so that the eigenvector
                 // matrix is triangular
                 if (tlapack::abs(U(en, en - 1)) <= tlapack::abs(U(en - 1, en))){
-                    real_t a = real_t(0);
-                    real_t b = real_t(0);
+                    real_t a = zero;
+                    real_t b = zero;
                     cdiv(zero,  -U(en - 1, en),  U(en - 1, en - 1) - p, q, a, b);
                     U(en - 1, en - 1) = a;
                     U(en - 1, en) = b;
@@ -148,8 +147,8 @@ namespace tlapack
                         }
                         m = i;
                         if (wi[i] == zero) {
-                            real_t a = real_t(0);
-                            real_t b = real_t(0);
+                            real_t a = zero;
+                            real_t b = zero;
                             cdiv(-ra, -sa, w, q, a, b);
                             U(i,en - 1) = a;
                             U(i,en) = b;
@@ -158,17 +157,17 @@ namespace tlapack
                             x = U(i, i + 1);
                             y = U(i + 1, i);
                             vr = (wr[i] - p) * (wr[i] - p) + wi[i] * wi[i] - q * q;
-                            vi = (wr[i] - p) * real_t(2) * q;
+                            vi = (wr[i] - p) * two * q;
                             if (vr == zero && vi == zero) {
                                 tst1 = norm * (tlapack::abs(w) + tlapack::abs(q) + tlapack::abs(x) + tlapack::abs(y) + tlapack::abs(zz));
                                 vr = tst1;
                                 do {
-                                    vr = real_t(0.01) * vr;
+                                    vr = scalingFactor * vr;
                                     tst2 = tst1 + vr;
                                 } while (tst2 > tst1);
                             }
-                            real_t a = real_t(0);
-                            real_t b = real_t(0);
+                            real_t a = zero;
+                            real_t b = zero;
                             cdiv(x * r - zz * ra + q * sa, x * s - zz * sa - q * ra, vr, vi,  a, b);
                             U(i,en - 1) = a;
                             U(i,en) = b;
@@ -176,8 +175,8 @@ namespace tlapack
                                 U(i + 1, en - 1) = (-ra - w * U(i,en - 1) + q * U(i,en)) / x;
                                 U(i + 1, en) = (-sa - w * U(i,en) - q * U(i,en - 1)) / x;
                             } else {
-                                a = real_t(0);
-                                b = real_t(0);
+                                a = zero;
+                                b = zero;
                                 cdiv(-r - y * U(i, en - 1), -s - y * U(i,en), zz, q, a, b);
                                 U(i + 1, en - 1) = a;
                                 U(i + 1, en) = b;

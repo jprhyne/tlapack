@@ -27,8 +27,7 @@ using namespace tlapack;
 
 TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REAL_TYPES_TO_TEST)
 {
-    srand(1);
-
+    //srand(1);
     rand_generator gen;
     
 
@@ -36,10 +35,8 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     using T = type_t<matrix_t>;
     using idx_t = size_type<matrix_t>;
     typedef real_type<T> real_t;
-    /*
     // Complex numbers are constructed as complex_t(real,imaginary)
-    typedef complex_type<real_t> complex_t; 
-    */
+    typedef complex_type<T> complex_t; 
 
     idx_t n;
 
@@ -51,7 +48,8 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     const T zeroT = T(0);
 
     // Function
-    Create<matrix_t> new_matrix;
+    Create<matrix_t> new_matrix; // For Real matrices
+    Create<legacyMatrix<std::complex<real_t>,std::size_t,Layout::ColMajor>> new_matrixC; // For Complex matrices
 
 
     // Create matrices
@@ -67,13 +65,12 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
 
     // Generate A as a random symmetric matrix. This is to ensure it is diagonalizable
     for (idx_t i = 0; i < n; i++) {
-        for (idx_t j = i; j < n && j <= i + 1; j++) {
+        for (idx_t j = i; j < n; j++) {
             T val = rand_helper<T>(gen); 
             A(i,j) = val;
             A(j,i) = val; // ensuring symmetry
         }
     }
-    /*
     // Perform Hessenberg reduction on A.
     std::vector<T> tau(n);
     gehrd(0,n - 1, A, tau);
@@ -84,7 +81,6 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
         if (i != 0)
             for (idx_t j = 0; j < i - 1; j++) 
                 A(i,j) = zeroT;
-    */
     // Copy A into U
     for (idx_t i = 0; i < n; i++)
         for (idx_t j = 0; j < n; j++)
@@ -121,113 +117,51 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
             k++;
         }
     }
-    // Now, currently we are only testing matrices that are guaranteed to be diagonalizable with real
-    // eigenvalues. 
-    // If more behavior is desired we will need to switch between these two 
-    // test cases below. 
-    // If we have real eigenvalues then we test A - VDV^{-1}
-    // If we have complex eigenvalues we test representativity through AV - VD
-    //      AND test if V is invertible by constructing a matrix of type complex_t and finding
-    //      the eigenvalues of it and ensuring it is non-zero. We will test it with lahqr 
-    //      since it is designed to work with complex complex matrices at the moment.
-    //      Once hqr supports complex matrices, we can switch to using this
-    // Checking all our eigenvalues are real
-    for (idx_t i = 0; i < n; i++) 
-        CHECK(wi[i] == real_t(0));
-    std::vector<T> Zi_; auto Zi = new_matrix( Zi_, n, n);
-    lacpy(Uplo::General, Z, Zi);
+    // Now, currently we are only testing matrices that are supposed to be diagonalizable
+    // We will test representativity by constructing a matrix Zc such that Zc contains 
+    // the eigenvectors stored in Z but as complex numbers
+    // Similarly, do so for Dc containing the eigenvalues stored as complex numbers
+    std::vector<std::complex<real_t>> Zc_; auto Zc = new_matrixC( Zc_, n, n);
+    for (idx_t j = 0; j < n; j++) { // For each column
+        for (idx_t i = 0; i < n; i++) { // Grab the ith row
+            // For more information on how the eigenvectors are constructed
+            // see the documentation for hqr_schurToEigen
+            // If wi[j] is 0, then we have a real eigenvector, so we only need to copy the current column
+            if (wi[j] == zeroT)
+                Zc(i,j) = std::complex<real_t>(Z(i,j), 0);
+            // If wi[j] is positive, then we have an eigenvector of the form Z[:,j] + Z[:,j+1]*i
+            else if (wi[j] > zeroT)
+                Zc(i,j) = std::complex<real_t>(Z(i,j), Z(i,j + 1));
+            // Otherwise, we found the conjugate pair so we need Z[:,j-1] - Z[:,j]*i
+            else
+                Zc(i,j) = std::complex<real_t>(Z(i,j - 1), -Z(i,j));
+        }
+    }
+    std::vector<std::complex<real_t>> Zi_; auto Zi = new_matrixC( Zi_, n, n);
+    lacpy(Uplo::General, Zc, Zi);
     std::vector<T> Piv(n);
     // Perform LU Decomp of Zi
     retCode = getrf(Zi,Piv);
-    CHECK(retCode == 0);
+    CHECK(retCode == 0); // Ensure we properly computed the LU
     // Now compute the inverse of Zi
     retCode = getri(Zi,Piv);
-    CHECK(retCode == 0);
+    CHECK(retCode == 0); // Ensure we properly computed the Inverse
     // Now test VDV^{-1} - A
-    std::vector<T> lhs_; auto lhs = new_matrix( lhs_, n, n);
-    std::vector<T> D_; auto D = new_matrix( D_, n, n);
+    std::vector<std::complex<real_t>> lhs_; auto lhs = new_matrixC( lhs_, n, n);
+    std::vector<std::complex<real_t>> Dc_; auto Dc = new_matrixC( Dc_, n, n);
     for (idx_t i = 0; i < n; i++)
-        D(i,i) = wr[i];
+        Dc(i,i) = std::complex<real_t>(wr[i], wi[i]);
+    // We need to also construct Ac which is just a complex equivalent of A
+    // with 0 for all imaginary parts
+    std::vector<std::complex<real_t>> Ac_; auto Ac = new_matrixC( Ac_, n, n);
+    for (idx_t i = 0; i < n; i++)
+        for (idx_t j = 0; j < n; j++)
+            Ac(i,j) = std::complex<real_t>(A(i,j),0);
 
-    gemm(Op::NoTrans, Op::NoTrans, real_t(1), Z, D, lhs);
+    gemm(Op::NoTrans, Op::NoTrans, real_t(1), Zc, Dc, lhs);
     // Note: This overwrites A, but we already have the norm of A saved from hqr
-    gemm(Op::NoTrans, Op::NoTrans, real_t(1), lhs, Zi, real_t(-1), A);
+    gemm(Op::NoTrans, Op::NoTrans, real_t(1), lhs, Zi, real_t(-1), Ac);
     // Compute the frobenius norm of the residual
-    real_t normR = lange(tlapack::frob_norm, A);
+    real_t normR = lange(tlapack::frob_norm, Ac);
     CHECK(normR <= tol * norm);
-
-    
-    /*
-    std::vector<T> diffReal_; auto diffReal = new_matrix( diffReal_, n, n);
-    std::vector<T> diffImag_; auto diffImag = new_matrix( diffImag_, n, n);
-    real_t zero = real_t(0);
-    for (idx_t k = 0; k < n; k++) {
-        // Redeclare on each loop to not have to reset each value to 0
-        // Vectors that will store Av = Ax + i * Ay
-        std::vector<T> Ax(n);
-        std::vector<T> Ay(n);
-        // Vectors that will store \lambda v = (a + ib)(x+iy) = (ax - by) + i(ay + bx)
-        std::vector<T> ax(n);
-        std::vector<T> ay(n);
-        // Check if the current eigenvalue is real or imaginary.
-        // If it is real, we need only check Ax = ax
-        if (wi[k] == zero) {
-            // Real eigenvalue (eigenValsReal[k]) with eigenvector eigenMat(:,k)
-            for (idx_t i = 0; i < n; i++) {
-                for (idx_t j = 0; j < n; j++) {
-                    Ax[i] += A(i,j) * Z(j,k);
-                }
-                ax[i] = wr[k] * Z(i,k);
-            }
-        } else if (wi[k] > real_t(0.0)) {
-            //continue;
-            // Imaginary with positive imaginary part so has associated eigenvector
-            // eigenMat(:,k) + i * eigenMat(:,k+1)
-            // compute Ax,Ay
-            for (idx_t i = 0; i < n; i++) {
-                for (idx_t j = 0; j < n; j++) {
-                    Ax[i] += A(i,j) * Z(j,k);
-                    Ay[i] += A(i,j) * Z(j, k + 1);
-                }
-                ax[i] = wr[k] * Z(i,k) - wi[k] * Z(i,k+1);
-                ay[i] = wr[k] * Z(i,k + 1) + wi[k] * Z(i,k);
-            }
-        } else {
-            //continue;
-            // Imaginary with negative imaginary part so has associated eigenvector
-            // eigenMat(:,k-1) - i * eigenMat(:,k)
-            for (idx_t i = 0; i < n; i++) {
-                for (idx_t j = 0; j < n; j++) {
-                    Ax[i] += A(i,j) * Z(j,k - 1);
-                    Ay[i] -= A(i,j) * Z(j, k);
-                }
-                ax[i] = wr[k] * Z(i, k - 1) + wi[k] * Z(i, k);
-                ay[i] = wi[k] * Z(i, k - 1) - wr[k] * Z(i, k);
-            }
-        } 
-        // Now we construct the kth column of diffReal and diffImag. Note that if we had a real eigenvalue the
-        // kth column of diffImag will be exactly 0
-        for (idx_t i = 0; i < n; i++) {
-            // We want the kth column of diffReal to be Ax - ax
-            // and the kth column of diffImag to be Ay - ay
-            diffReal(i,k) = Ax[i] - ax[i];
-            diffImag(i,k) = Ay[i] - ay[i];
-        }
-    }
-    // Now we have computed AV - VD and stored the real and imaginary parts separately
-    // Since we want to get a relative error we must compute \|AV - VD\| in order
-    // for this to be as close to accurate as possible we will compute the sum 
-    // of the absolute elements of AV - VD using the fact that |a + bi| = sqrt(a^2 + b^2)
-    real_t normR = real_t(0.0);
-    real_t normA = real_t(0.0);
-    for (idx_t i = 0; i < n; i++) {
-        for (idx_t j = 0; j < n; j++){
-            real_t tmpA = diffReal(i,j);
-            real_t tmpB = diffImag(i,j);
-            normR += sqrt(tmpA * tmpA + tmpB * tmpB); 
-            normA += tlapack::abs(A(i,j));
-        }
-    }
-    CHECK(normR <= tol * normA);
-    */
 }

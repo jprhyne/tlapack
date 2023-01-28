@@ -76,6 +76,9 @@ namespace tlapack
         using TA = type_t<matrix_t>;
         using idx_t = size_type<matrix_t>;
         using real_t = real_type<TA>; 
+        // Constants
+        real_t zero = real_t(0);
+        real_t one = real_t(1);
 
         // Grab the number of columns of A, we only work on square matrices
         const idx_t n = ncols(A);
@@ -94,11 +97,8 @@ namespace tlapack
 
         // Now, we actually start porting the behavior
 
-        // Initialize some variables at the beginning. We use the following
-        // general conversion schema
-        // double   -> real_t
-        // int      -> idx_t
-        norm = 0.0; 
+        // Initialize some variables at the beginning.
+        norm = zero; 
         idx_t i,j,en,m,itn,its,l;
         real_t p,q,r,s,t,w,x,y,z,zz;
         // Construct the sum of the absolute elements of A and check for isolated
@@ -111,7 +111,7 @@ namespace tlapack
             if (i >= low && i <= igh)
                 continue;
             wr[i] = A(i, i);
-            wi[i] = 0.0;
+            wi[i] = zero;
         }
 
         // Initialize some more variables
@@ -122,7 +122,7 @@ namespace tlapack
         // itn is the total number of QR iterations we allow for the entire matrix
         //      The heuristic chosen was 30 * n
         en = igh;
-        t = 0.0;
+        t = zero;
         itn = 30 * n;
 
         // This is a hack that we can possibly refactor out. We
@@ -154,7 +154,7 @@ namespace tlapack
                 if (want_Q)
                     A(en, en) = x + t;
                 wr[en] = x + t;
-                wi[en] = real_t(0.0);
+                wi[en] = zero;
                 en -= 1;
                 foundEigenValue = true;
             } else {
@@ -175,7 +175,7 @@ namespace tlapack
                 // if Q is desired. (Note we only compute the Schur 
                 // form of A if Q is desired. This may be modifiable if 
                 // desired)
-                p = ( y - x ) / 2.0;
+                p = ( y - x ) / real_t(2.0);
                 q = p * p + w;
                 zz = sqrt(tlapack::abs(q));
                 if (want_Q) {
@@ -183,7 +183,7 @@ namespace tlapack
                     A(en - 1, en - 1) = y + t;
                 }
                 x = x + t;
-                if ( q < 0.0 ) {
+                if ( q < zero ) {
                     // This means we found a complex pair
                     wr[en - 1] = x + p;
                     wr[en] = x + p;
@@ -191,14 +191,14 @@ namespace tlapack
                     wi[en] = -zz;
                 } else {
                     // Otherwise we have a real pair
-                    if (p >= 0.0) 
+                    if (p >= zero) 
                         zz = p + zz;
                     else
                         zz = p - zz;
                     wr[en - 1] = x + zz;
-                    wr[en] = (zz == 0.0) ? (wr[en - 1]) : (x - w / zz);
-                    wi[en - 1] = 0.0;
-                    wi[en] = 0.0;
+                    wr[en] = (zz == zero) ? (wr[en - 1]) : (x - w / zz);
+                    wi[en - 1] = zero;
+                    wi[en] = zero;
                     if (want_Q) {
                         x = A(en, en - 1);
                         s = tlapack::abs(x) + tlapack::abs(zz);

@@ -23,7 +23,7 @@ using namespace tlapack;
 
 TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REAL_TYPES_TO_TEST)
 {
-    srand(1);
+    //srand(1);
 
     rand_generator gen;
     
