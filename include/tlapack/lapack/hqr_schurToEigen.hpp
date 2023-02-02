@@ -204,15 +204,14 @@ namespace tlapack
         // This section produces the vectors of isolated roots. 
         // In our testing we do nothing with this, however this is kept in the event
         // that balance or a similar function is ported and/or used
-        for (idx_t i = 0; i < n && (i < low || i > igh); i++) {
-            for (idx_t j = 0; j < n; j++)
+        for (idx_t i = 0; i < n; i++) {
+            if (i >= low && i <= igh) continue;
+            for (idx_t j = i; j < n; j++)
                 Z(i,j) = U(i,j);
         }
         // This may be able to be refactored into smarter matrix multiplication
         for (idx_t j = n - 1; j >= low && j <= n - 1; j--) {
-            m = j;
-            if (m > igh)
-                m = igh;
+            m = (j <= igh) ? (j) : (igh);
             for (idx_t i = low; i <= igh; i++) {
                 zz = zero;
                 for (idx_t k = low; k <= m; k++) 

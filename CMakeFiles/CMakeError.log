@@ -1,0 +1,57 @@
+Determining if the function sgemm_ exists failed with the following output:
+Change Dir: /home/lidesia/Documents/CUDenver/RAShip/gitRepos/tlapack/CMakeFiles/CMakeScratch/TryCompile-uwaYSl
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_c1925/fast && /usr/bin/make  -f CMakeFiles/cmTC_c1925.dir/build.make CMakeFiles/cmTC_c1925.dir/build
+make[1]: Entering directory '/home/lidesia/Documents/CUDenver/RAShip/gitRepos/tlapack/CMakeFiles/CMakeScratch/TryCompile-uwaYSl'
+Building CXX object CMakeFiles/cmTC_c1925.dir/CheckFunctionExists.cxx.o
+/usr/bin/c++   -DCHECK_FUNCTION_EXISTS=sgemm_ -o CMakeFiles/cmTC_c1925.dir/CheckFunctionExists.cxx.o -c /home/lidesia/Documents/CUDenver/RAShip/gitRepos/tlapack/CMakeFiles/CMakeScratch/TryCompile-uwaYSl/CheckFunctionExists.cxx
+Linking CXX executable cmTC_c1925
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c1925.dir/link.txt --verbose=1
+/usr/bin/c++  -DCHECK_FUNCTION_EXISTS=sgemm_ CMakeFiles/cmTC_c1925.dir/CheckFunctionExists.cxx.o -o cmTC_c1925 
+/usr/bin/ld: CMakeFiles/cmTC_c1925.dir/CheckFunctionExists.cxx.o: in function `main':
+CheckFunctionExists.cxx:(.text+0x10): undefined reference to `sgemm_'
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_c1925.dir/build.make:99: cmTC_c1925] Error 1
+make[1]: Leaving directory '/home/lidesia/Documents/CUDenver/RAShip/gitRepos/tlapack/CMakeFiles/CMakeScratch/TryCompile-uwaYSl'
+make: *** [Makefile:127: cmTC_c1925/fast] Error 2
+
+
+
+Determining if the function cheev_ exists failed with the following output:
+Change Dir: /home/lidesia/Documents/CUDenver/RAShip/gitRepos/tlapack/CMakeFiles/CMakeScratch/TryCompile-tTfHHk
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_a65f9/fast && /usr/bin/make  -f CMakeFiles/cmTC_a65f9.dir/build.make CMakeFiles/cmTC_a65f9.dir/build
+make[1]: Entering directory '/home/lidesia/Documents/CUDenver/RAShip/gitRepos/tlapack/CMakeFiles/CMakeScratch/TryCompile-tTfHHk'
+Building CXX object CMakeFiles/cmTC_a65f9.dir/CheckFunctionExists.cxx.o
+/usr/bin/c++   -DCHECK_FUNCTION_EXISTS=cheev_ -o CMakeFiles/cmTC_a65f9.dir/CheckFunctionExists.cxx.o -c /home/lidesia/Documents/CUDenver/RAShip/gitRepos/tlapack/CMakeFiles/CMakeScratch/TryCompile-tTfHHk/CheckFunctionExists.cxx
+Linking CXX executable cmTC_a65f9
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a65f9.dir/link.txt --verbose=1
+/usr/bin/c++  -DCHECK_FUNCTION_EXISTS=cheev_ CMakeFiles/cmTC_a65f9.dir/CheckFunctionExists.cxx.o -o cmTC_a65f9  /usr/lib/libblas.so -lm -ldl 
+/usr/bin/ld: CMakeFiles/cmTC_a65f9.dir/CheckFunctionExists.cxx.o: in function `main':
+CheckFunctionExists.cxx:(.text+0x10): undefined reference to `cheev_'
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_a65f9.dir/build.make:100: cmTC_a65f9] Error 1
+make[1]: Leaving directory '/home/lidesia/Documents/CUDenver/RAShip/gitRepos/tlapack/CMakeFiles/CMakeScratch/TryCompile-tTfHHk'
+make: *** [Makefile:127: cmTC_a65f9/fast] Error 2
+
+
+
+Determining if the function LAPACKE_dgeqrf exists failed with the following output:
+Change Dir: /home/lidesia/Documents/CUDenver/RAShip/gitRepos/tlapack/CMakeFiles/CMakeScratch/TryCompile-UyFg07
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_31589/fast && /usr/bin/make  -f CMakeFiles/cmTC_31589.dir/build.make CMakeFiles/cmTC_31589.dir/build
+make[1]: Entering directory '/home/lidesia/Documents/CUDenver/RAShip/gitRepos/tlapack/CMakeFiles/CMakeScratch/TryCompile-UyFg07'
+Building CXX object CMakeFiles/cmTC_31589.dir/CheckFunctionExists.cxx.o
+/usr/bin/c++   -DCHECK_FUNCTION_EXISTS=LAPACKE_dgeqrf -o CMakeFiles/cmTC_31589.dir/CheckFunctionExists.cxx.o -c /home/lidesia/Documents/CUDenver/RAShip/gitRepos/tlapack/CMakeFiles/CMakeScratch/TryCompile-UyFg07/CheckFunctionExists.cxx
+Linking CXX executable cmTC_31589
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_31589.dir/link.txt --verbose=1
+/usr/bin/c++  -DCHECK_FUNCTION_EXISTS=LAPACKE_dgeqrf CMakeFiles/cmTC_31589.dir/CheckFunctionExists.cxx.o -o cmTC_31589  /usr/lib/liblapack.so /usr/lib/libblas.so 
+/usr/bin/ld: CMakeFiles/cmTC_31589.dir/CheckFunctionExists.cxx.o: in function `main':
+CheckFunctionExists.cxx:(.text+0x10): undefined reference to `LAPACKE_dgeqrf'
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_31589.dir/build.make:101: cmTC_31589] Error 1
+make[1]: Leaving directory '/home/lidesia/Documents/CUDenver/RAShip/gitRepos/tlapack/CMakeFiles/CMakeScratch/TryCompile-UyFg07'
+make: *** [Makefile:127: cmTC_31589/fast] Error 2
+
+
+
