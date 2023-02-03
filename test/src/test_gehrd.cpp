@@ -79,7 +79,7 @@ TEMPLATE_TEST_CASE("Hessenberg reduction is backward stable", "[eigenvalues][hes
     if (matrix_type == "Random")
     {
         // Generate n
-        n = GENERATE(1, 2, 3, 5, 10);
+        n = GENERATE(1,2,3,5,10);
         // Generate ilo and ihi
         idx_t ilo_offset = GENERATE(0, 1);
         idx_t ihi_offset = GENERATE(0, 1);
