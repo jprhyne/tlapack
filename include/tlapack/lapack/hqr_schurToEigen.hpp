@@ -88,7 +88,7 @@ namespace tlapack
                                 do {
                                     t *= scalingFactor;
                                     tst2 = norm + t;
-                                } while (tst2 >= tst1);
+                                } while (tst2 > tst1);
                             }
                             U(i,en) = -r / t;
                         } else {
@@ -109,7 +109,7 @@ namespace tlapack
                             tst2 = tst1 + one / tst1;
                             if (tst2 <= tst1) {
                                 for (idx_t j = i; j <= en; j++)
-                                    U(j, en) /= t;
+                                    U(j, en) = U(j,en) / t;
                             }
                         }
                     }

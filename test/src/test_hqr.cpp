@@ -16,6 +16,8 @@
 
 #include <tlapack/lapack/lacpy.hpp>
 #include <tlapack/lapack/lange.hpp>
+#include <tlapack/lapack/gehrd.hpp>
+#include <tlapack/lapack/unghr.hpp>
 
 // Auxiliary routines
 
@@ -52,6 +54,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     // Create matrices
     std::vector<T> A_; auto A = new_matrix( A_, n, n);
     std::vector<T> U_; auto U = new_matrix( U_, n, n);
+    std::vector<T> H_; auto H = new_matrix( H_, n, n);
     std::vector<T> Q_; auto Q = new_matrix( Q_, n, n);
     std::vector<T> wr(n);
     std::vector<T> wi(n);
@@ -67,11 +70,19 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
         for(int j = start; j < n; j++) {
             T val = rand_helper<T>(gen);
             A(i,j) = val; 
-            U(i,j) = val; 
+            H(i,j) = val; 
         }
     }
+    std::vector<T> tau(n);
+    gehrd(0, n - 1, H, tau);
+    lacpy(Uplo::General, H, Q);
+    unghr(0, n - 1, Q, tau);
     idx_t ilo = 0;
     idx_t igh = n - 1;
+    for (idx_t i = 1; i < n; i++) 
+        for (idx_t j = 0; j < i - 1; j++) 
+            H(i,j) = zero;
+    /*
     if (matrix_type == "Inner Window") {
         // leave above diagonal alone
         ilo = n/4;
@@ -89,15 +100,12 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
             }
         }
     }
-
-    // Start Q as eye(n)
-    for (idx_t i = 0; i < n; i++)
-        Q(i,i) = one;
+    */
 
     //Call hqr
     real_t norm = real_t(zero);
     // REname to EISPACK_HQR
-    int retCode = tlapack::hqr(U, ilo, igh, wr, wi, true, Q, norm);
+    int retCode = tlapack::hqr(H, ilo, igh, wr, wi, true, Q, norm);
     CHECK(retCode == 0);
 
     // Getting here means that we have successfully ran all of 
@@ -112,22 +120,22 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     for (idx_t i = 0; i < n; i++) 
         if (i != 0)
             for (idx_t j = 0; j < i - 1; j++) 
-                U(i,j) = 0;
+                H(i,j) = 0;
     // if eigValsImag[k]  = 0 then the sub diagonal elements need to be 0
     // If eigValsImag[k] != 0 then we have a schur block  
     idx_t k;
     for (k = 0; k < n-1; k++) {
-        if (wi[k] == 0) {
-            U(k+1,k) = 0;
+        if (wi[k] == zero) {
+            H(k+1,k) = zero;
         } else if (k < n-2){
             // This means we are in a schur block, so the next sub diagonal
             // element must be 0
-            U(k+2,k+1) = 0;
+            H(k+2,k+1) = zero;
             k++;
         }
     }
-    //  check || A - Q * U * Q^T ||_F / || A ||_F
+    //  check || A - Q * H * Q^T ||_F / || A ||_F
     auto normA = lange(tlapack::frob_norm, A);
-    auto sim_res_norm = check_similarity_transform(A,Q,U);
+    auto sim_res_norm = check_similarity_transform(A,Q,H);
     CHECK(sim_res_norm <= tol * normA);
 }
