@@ -77,9 +77,8 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     }
     // Perform Hessenberg reduction on A.
     std::vector<T> tau(n);
-    gehrd(0, n - 1, A, tau);
-    lacpy(Uplo::Lower, A, Q);
-    unghr(0, n - 1, Q, tau);
+    gehrd(0,n - 1, A, tau);
+
     // zero out the parts of A that represent Q
     // IE the 'reflectors'
     // After running tests, this is necessary for our function to run.

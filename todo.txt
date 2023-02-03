@@ -1,0 +1,19 @@
+Generate random matrix // maybe not random
+Structure it to upper hessenberg
+Run Thijs' code with a copy
+Run mine with another copy
+Compare accuracy and time // Talk to Weslley if this becomes difficult to time due to size and speed. Give to Weslley
+
+
+3) Eigenvector computations for Real matrices
+1) A just eigenvalue mode where we don't push past ilo igh (IE don't construct any unecessary parts of T)
+2) Same interface as Thijs' (goal to have 1 interface that can switch between eispack/Thijs with opts)
+4) Complex arithmetic (will need to build up from eispack ie extracting what block do and transcribe to TLAPACK operations)
+
+
+
+0) ask julien for the name (constructs AD where A is dense and D is a vector representing a diagonal matrixal)
+0b) Send compile.sh to Julien
+
+test eigenvector on full A instead of upper Hessenberg
+

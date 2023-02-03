@@ -20,7 +20,7 @@
 // Auxiliary routines
 
 using namespace tlapack;
-
+// Rework to be near identical to test_blocked_francis.cpp FORM
 TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REAL_TYPES_TO_TEST)
 {
     //srand(1);
@@ -73,6 +73,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     idx_t ilo = 0;
     idx_t igh = n - 1;
     if (matrix_type == "Inner Window") {
+        // leave above diagonal alone
         ilo = n/4;
         igh = 3 * n / 4;
         for (idx_t j = 0; j < ilo; ++j) {
@@ -95,6 +96,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
 
     //Call hqr
     real_t norm = real_t(zero);
+    // REname to EISPACK_HQR
     int retCode = tlapack::hqr(U, ilo, igh, wr, wi, true, Q, norm);
     CHECK(retCode == 0);
 
