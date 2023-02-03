@@ -70,11 +70,10 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
 
     // Generate our matrix A as a full matrix and then reduce it to 
     // hessenberg form
-    for (idx_t i = 0; i < n; i++) {
-        for (idx_t j = 0; j < n; j++) {
-            A(i,j) = rand_helper<T>(gen);
-        }
-    }
+    for (idx_t i = 0; i < n; i++)
+       for (idx_t j = 0; j < n; j++)
+          A(i,j) = rand_helper<T>(gen); 
+
     // Perform Hessenberg reduction on A.
     std::vector<T> tau(n);
     gehrd(0, n - 1, A, tau);
@@ -85,24 +84,9 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     // After running tests, this is necessary for our function to run.
     for (idx_t i = 0; i < n; i++) 
         if (i != 0)
-            for (idx_t j = 0; j < i - 1; j++) 
+            for (idx_t j = low; j < i - 1; j++) 
                 A(i,j) = zeroT;
     // If we want to test the ilo and igh behavior we 
-    idx_t ilo = 0;
-    idx_t igh = n-1;
-    /*
-    if (matrix_type == "Inner Window") {
-        ilo = n/4;
-        igh = 3 * n / 4;
-        for (idx_t j = 0; j < ilo; ++j)
-            for (idx_t i = j + 1; i < n; ++i) 
-                A(i,j) = zeroT;
-        for (idx_t i = igh; i < n; ++i) 
-            for (idx_t j = 0; j < i; ++j)
-                A(i,j) = zeroT;
-    }
-
-    */
     // Copy A into U
     for (idx_t i = 0; i < n; i++)
         for (idx_t j = 0; j < n; j++)
@@ -114,11 +98,11 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
 
     //Call hqr
     real_t norm = real_t(0.0);
-    idx_t retCode = hqr(U, ilo, igh, wr, wi, true, Z, norm);
+    idx_t retCode = hqr(U, low, igh, wr, wi, true, Z, norm);
     CHECK(retCode == 0);
 
     // Getting here means that we have successfully ran all of 
-    retCode = hqr_schurToEigen(U, ilo, igh, wr, wi, Z, norm);
+    retCode = hqr_schurToEigen(U, low, igh, wr, wi, Z, norm);
     CHECK(retCode == 0);
     // Zero out below quasi diagonal elements of T
     // First, zero out everything below the 1st subdiagonal
