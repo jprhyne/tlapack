@@ -93,10 +93,15 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     for (idx_t i = 1; i < n; i++)
         for (idx_t j = 0; j < i - 1; j++) 
             H(i,j) = zeroT;
+    lacpy(Uplo::General, Q, Z);
+    /*
+     * Remove this next section once we are ready to test the entirety of schurToEigen instead of just
+     * eigenvectors of an upper Hessenberg matrix
+     */
     for (idx_t i = 0; i < n; i++)
-        Z(i,i) = one;
-    //lacpy(Uplo::General, Q, Z);
-    //lacpy(Uplo::General, H, A);
+        for (idx_t j = 0; j < n; j++)
+            Z(i,j) = (i == j) ? one : zeroT;
+    lacpy(Uplo::General, H, A);
 
     //Call hqr
     real_t norm = real_t(0.0);
@@ -105,60 +110,104 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
 
     // Getting here means that we have successfully ran all of 
     retCode = hqr_schurToEigen(H, 0, n - 1, wr, wi, Z, norm);
-    
-    std::vector<T> tmp_; auto tmp = new_matrix( tmp_, n, n);
-    gemm(Op::NoTrans, Op::NoTrans, real_t(1), Q, Z,tmp);
-    lacpy(Uplo::General, tmp, Z);
     CHECK(retCode == 0);
-    // Now, currently we are only testing matrices that are supposed to be diagonalizable
-    // We will test representativity by constructing a matrix Zc such that Zc contains 
-    // the eigenvectors stored in Z but as complex numbers
-    // Similarly, do so for Dc containing the eigenvalues stored as complex numbers
-    std::vector<std::complex<real_t>> Zc_; auto Zc = new_matrixC( Zc_, n, n);
-    for (idx_t j = 0; j < n; j++) { // For each column
-        for (idx_t i = 0; i < n; i++) { // Grab the ith row
-            // For more information on how the eigenvectors are constructed
-            // see the documentation for hqr_schurToEigen
-            // If wi[j] is 0, then we have a real eigenvector, so we only need to copy the current column
-            if (wi[j] == zeroT)
-                Zc(i,j) = std::complex<real_t>(Z(i,j), 0);
-            // If wi[j] is positive, then we have an eigenvector of the form Z[:,j] + Z[:,j+1]*i
-            else if (wi[j] > zeroT)
-                Zc(i,j) = std::complex<real_t>(Z(i,j), Z(i,j + 1));
-            // Otherwise, we found the conjugate pair so we need Z[:,j-1] - Z[:,j]*i
-            else
-                Zc(i,j) = std::complex<real_t>(Z(i,j - 1), -Z(i,j));
+    auto testingScheme = "Complex Multiplication ";
+    // If wanting to test with complex numbers
+    if (testingScheme == "Complex Multiplication") {
+        // Now, currently we are only testing matrices that are supposed to be diagonalizable
+        // We will test representativity by constructing a matrix Zc such that Zc contains 
+        // the eigenvectors stored in Z but as complex numbers
+        // Similarly, do so for Dc containing the eigenvalues stored as complex numbers
+        std::vector<std::complex<real_t>> Zc_; auto Zc = new_matrixC( Zc_, n, n);
+        for (idx_t j = 0; j < n; j++) { // For each column
+            for (idx_t i = 0; i < n; i++) { // Grab the ith row
+                // For more information on how the eigenvectors are constructed
+                // see the documentation for hqr_schurToEigen
+                // If wi[j] is 0, then we have a real eigenvector, so we only need to copy the current column
+                if (wi[j] == zeroT)
+                    Zc(i,j) = std::complex<real_t>(Z(i,j), 0);
+                // If wi[j] is positive, then we have an eigenvector of the form Z[:,j] + Z[:,j+1]*i
+                else if (wi[j] > zeroT)
+                    Zc(i,j) = std::complex<real_t>(Z(i,j), Z(i,j + 1));
+                // Otherwise, we found the conjugate pair so we need Z[:,j-1] - Z[:,j]*i
+                else
+                    Zc(i,j) = std::complex<real_t>(Z(i,j - 1), -Z(i,j));
+            }
         }
-    }
-    std::vector<std::complex<real_t>> Zi_; auto Zi = new_matrixC( Zi_, n, n);
-    lacpy(Uplo::General, Zc, Zi);
-    std::vector<T> Piv(n);
-    // Perform LU Decomp of Zi
-    retCode = getrf(Zi,Piv);
-    CHECK(retCode == 0); // Ensure we properly computed the LU
-    // Now compute the inverse of Zi
-    retCode = getri(Zi,Piv);
-    CHECK(retCode == 0); // Ensure we properly computed the Inverse
-    // Now test VDV^{-1} - A
-    std::vector<std::complex<real_t>> lhs_; auto lhs = new_matrixC( lhs_, n, n);
-    std::vector<std::complex<real_t>> Dc_; auto Dc = new_matrixC( Dc_, n, n);
-    for (idx_t i = 0; i < n; i++)
-        Dc(i,i) = std::complex<real_t>(wr[i], wi[i]);
-    // We need to also construct Ac which is just a complex equivalent of A
-    // with 0 for all imaginary parts
-    std::vector<std::complex<real_t>> Ac_; auto Ac = new_matrixC( Ac_, n, n);
-    for (idx_t i = 0; i < n; i++)
-        for (idx_t j = 0; j < n; j++)
-            Ac(i,j) = std::complex<real_t>(A(i,j),0);
+        std::vector<std::complex<real_t>> Zi_; auto Zi = new_matrixC( Zi_, n, n);
+        lacpy(Uplo::General, Zc, Zi);
+        std::vector<T> Piv(n);
+        // Perform LU Decomp of Zi
+        retCode = getrf(Zi,Piv);
+        CHECK(retCode == 0); // Ensure we properly computed the LU
+        // Now compute the inverse of Zi
+        retCode = getri(Zi,Piv);
+        CHECK(retCode == 0); // Ensure we properly computed the Inverse
+        // Now test VDV^{-1} - A
+        std::vector<std::complex<real_t>> lhs_; auto lhs = new_matrixC( lhs_, n, n);
+        std::vector<std::complex<real_t>> Dc_; auto Dc = new_matrixC( Dc_, n, n);
+        for (idx_t i = 0; i < n; i++)
+            Dc(i,i) = std::complex<real_t>(wr[i], wi[i]);
+        // We need to also construct Ac which is just a complex equivalent of A
+        // with 0 for all imaginary parts
+        std::vector<std::complex<real_t>> Ac_; auto Ac = new_matrixC( Ac_, n, n);
+        for (idx_t i = 0; i < n; i++)
+            for (idx_t j = 0; j < n; j++)
+                Ac(i,j) = std::complex<real_t>(A(i,j),0);
+    
+        gemm(Op::NoTrans, Op::NoTrans, real_t(1), Zc, Dc, lhs);
+        // Note: This overwrites A, but we already have the norm of A saved from hqr
+        gemm(Op::NoTrans, Op::NoTrans, real_t(1), lhs, Zi, real_t(-1), Ac);
+        // Compute the frobenius norm of the residual
+        real_t normR = lange(tlapack::frob_norm, Ac);
+        real_t normZ = lange(tlapack::frob_norm, Zc);
+        real_t normZi = lange(tlapack::frob_norm, Zi);
+        real_t normD = lange(tlapack::frob_norm, Dc);
+        CHECK(normR <= tol * normZ * normZi * normD);
+    } else {
+        // This means our testing Scheme is going to be using only real arithmetic
+        // So we will have to construct our diagonal matrix much more carefully
+        std::vector<T> D_; auto D = new_matrix(D_, n, n);
+        for (idx_t j = 0; j < n; j++) {
+            // From here we need to determine if our eigenvalue is real or complex
+            // if it is complex, then we must create a 2x2 block of the form
+            // ( wr[j] wi[j]
+            //  -wi[j] wr[j] )
+            // Then skip over the next eigenvalue as wr and wi contain the conjugate pairs
+            if (wi[j] != real_t(0)) {
+                D(j,j) = wr[j];
+                D(j + 1,j + 1) = wr[j];
+                D(j, j + 1) = wi[j];
+                D(j + 1, j) = - wi[j];
+                j++;
+            } else {
+                // Otherwise we just put the real eigenvalue on the diagonal
+                D(j,j) = wr[j];
+            }
+        }
+        // Now we can do basically what is above to test if we have the correct form
+        // Now, construct Zi 
+        std::vector<T> Zi_; auto Zi = new_matrix( Zi_, n, n);
+        lacpy(Uplo::General, Z, Zi);
+        std::vector<T> Piv(n);
+        // Perform LU Decomp of Zi
+        retCode = getrf(Zi,Piv);
+        CHECK(retCode == 0); // Ensure we properly computed the LU
+        // Now compute the inverse of Zi
+        retCode = getri(Zi,Piv);
+        CHECK(retCode == 0); // Ensure we properly computed the Inverse
+        // Now test VDV^{-1} - A
+        std::vector<T> lhs_; auto lhs = new_matrix( lhs_, n, n);
+        gemm(Op::NoTrans, Op::NoTrans, real_t(1), Z, D, lhs);
+        // Note: This overwrites A, but we already have the norm of A saved from hqr
+        gemm(Op::NoTrans, Op::NoTrans, real_t(1), lhs, Zi, real_t(-1), A);
+        // Compute the frobenius norm of the residual
+        real_t normR = lange(tlapack::frob_norm, A);
+        real_t normZ = lange(tlapack::frob_norm, Z);
+        real_t normZi = lange(tlapack::frob_norm, Zi);
+        real_t normD = lange(tlapack::frob_norm, D);
+        CHECK(normR <= tol * normZ * normZi * normD);
 
-    gemm(Op::NoTrans, Op::NoTrans, real_t(1), Zc, Dc, lhs);
-    // Note: This overwrites A, but we already have the norm of A saved from hqr
-    gemm(Op::NoTrans, Op::NoTrans, real_t(1), lhs, Zi, real_t(-1), Ac);
-    // Compute the frobenius norm of the residual
-    real_t normR = lange(tlapack::frob_norm, Ac);
-    real_t normZ = lange(tlapack::frob_norm, Zc);
-    real_t normZi = lange(tlapack::frob_norm, Zi);
-    real_t normD = lange(tlapack::frob_norm, Dc);
-    CHECK(normR <= tol * normZ * normZi * normD);
+    }
     //CHECK(normR <= tol * norm);
 }
