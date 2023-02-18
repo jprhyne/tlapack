@@ -1,4 +1,4 @@
-/// @file hqr.hpp
+/// @file eispack_hqr.hpp
 /// @author Johnathan Rhyne, CU Denver, USA
 /// Adapted from @see https://netlib.org/eispack/hqr2.f
 //
@@ -14,10 +14,10 @@
 
 #include <functional>
 
-#include "tlapack/lapack/hqr_subDiagonalSearch.hpp"
-#include "tlapack/lapack/hqr_formShift.hpp"
-#include "tlapack/lapack/hqr_doubleSubDiagonalSearch.hpp"
-#include "tlapack/lapack/hqr_qrIteration.hpp"
+#include "tlapack/lapack/eispack_hqr_subDiagonalSearch.hpp"
+#include "tlapack/lapack/eispack_hqr_formShift.hpp"
+#include "tlapack/lapack/eispack_hqr_doubleSubDiagonalSearch.hpp"
+#include "tlapack/lapack/eispack_hqr_qrIteration.hpp"
 
 
 namespace tlapack
@@ -63,7 +63,7 @@ namespace tlapack
      *      computing the eigenvectors of A after computing the Schur vectors
      */
     template <class matrix_t, class vector_t>
-    int hqr(
+    int eispack_hqr(
         matrix_t &A,
         size_type<matrix_t> low,
         size_type<matrix_t> igh,
@@ -145,7 +145,7 @@ namespace tlapack
 
             // Perform a subdiagonal search to determine where the first
             // small subdiagonal element is
-            l = hqr_subDiagonalSearch(low,A,en,norm,s);
+            l = eispack_hqr_subDiagonalSearch(low,A,en,norm,s);
             // Check to see if we found eigenvalues based on l from the subDiagonalSearch
             // if not, perform our form shift
             x = A(en, en);
@@ -192,9 +192,9 @@ namespace tlapack
                 } else {
                     // Otherwise we have a real pair
                     if (p >= zero) 
-                        zz = p + zz;
+                        zz = p + tlapack::abs(zz);
                     else
-                        zz = p - zz;
+                        zz = p - tlapack::abs(zz);
                     wr[en - 1] = x + zz;
                     wr[en] = (zz == zero) ? (wr[en - 1]) : (x - w / zz);
                     wi[en - 1] = zero;
@@ -205,8 +205,8 @@ namespace tlapack
                         p = x / s;
                         q = zz / s;
                         r = sqrt(p*p + q*q);
-                        p /= r;
-                        q /= r;
+                        p = p / r;
+                        q = q / r;
                         // Row modifications
                         for (j = en - 1; j < n; j++) {
                             zz = A(en - 1, j);
@@ -236,13 +236,13 @@ namespace tlapack
                 // We can put this check inside of formShift if we want to support shifts on 
                 // every iteration or on a different about of iterations
                 if (its % 10 == 0 && its > 0)
-                    hqr_formShift(low, A, en, s, t, x, y, w);
+                    eispack_hqr_formShift(low, A, en, s, t, x, y, w);
                 // We only do a QR step if we did not find an eigenvalue
                 its += 1;
                 itn -= 1;
-                m = hqr_doubleSubDiagonalSearch(A, en, l, s, x, y, w, p, q, r, zz);
+                m = eispack_hqr_doubleSubDiagonalSearch(A, en, l, s, x, y, w, p, q, r, zz);
                 // double qr step
-                hqr_qrIteration(A, en, l, s, x, y, p, q, r, zz, m, want_Q, low, igh, Q);
+                eispack_hqr_qrIteration(A, en, l, s, x, y, p, q, r, zz, m, want_Q, low, igh, Q);
                 didQRStep = true;    
             }
 

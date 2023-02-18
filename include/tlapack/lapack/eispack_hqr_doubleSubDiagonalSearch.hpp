@@ -1,4 +1,4 @@
-/// @file hqr_doubleSubDiagonalSearch.hpp
+/// @file eispack_hqr_doubleSubDiagonalSearch.hpp
 /// @author Johnathan Rhyne, CU Denver, USA
 /// Adapted from @see https://netlib.org/eispack/hqr2.f
 //
@@ -19,7 +19,7 @@ namespace tlapack
      * TODO: Determine what this function does
      */
     template <class matrix_t>
-    int hqr_doubleSubDiagonalSearch(
+    int eispack_hqr_doubleSubDiagonalSearch(
         matrix_t &A,
         size_type<matrix_t> en,
         size_type<matrix_t> l,

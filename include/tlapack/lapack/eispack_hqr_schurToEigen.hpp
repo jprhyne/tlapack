@@ -1,4 +1,4 @@
-/// @file hqr_schurToEigen.hpp
+/// @file eispack_hqr_schurToEigen.hpp
 /// @author Johnathan Rhyne, CU Denver, USA
 /// Adapted from @see https://netlib.org/eispack/hqr2.f
 //
@@ -16,7 +16,7 @@
 namespace tlapack
 {
     template <class matrix_t, class vector_t>
-    int hqr_schurToEigen(
+    int eispack_hqr_schurToEigen(
         matrix_t &U,
         size_type<matrix_t> low,
         size_type<matrix_t> igh,

@@ -1,4 +1,4 @@
-/// @file test_hqr_schurToEigen.cpp
+/// @file test_eispack_hqr_schurToEigen.cpp
 /// @brief Test HQR. 
 //
 // Copyright (c) 2022, University of Colorado Denver. All rights reserved.
@@ -19,8 +19,8 @@
 #include <tlapack/lapack/getrf.hpp>
 #include <tlapack/blas/gemm.hpp>
 
-#include <tlapack/lapack/hqr.hpp>
-#include <tlapack/lapack/hqr_schurToEigen.hpp>
+#include <tlapack/lapack/eispack_hqr.hpp>
+#include <tlapack/lapack/eispack_hqr_schurToEigen.hpp>
 
 // Auxiliary routines
 
@@ -83,9 +83,9 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     }
     // Perform Hessenberg reduction on A.
     std::vector<T> tau(n);
-    gehrd(0,n - 1, H, tau);
+    gehrd(0,n, H, tau);
     lacpy(Uplo::General, H, Q);
-    unghr(0, n - 1, Q, tau);
+    unghr(0, n, Q, tau);
 
     // zero out the parts of A that represent Q
     // IE the 'reflectors'
@@ -98,20 +98,27 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
      * Remove this next section once we are ready to test the entirety of schurToEigen instead of just
      * eigenvectors of an upper Hessenberg matrix
      */
+    /*
     for (idx_t i = 0; i < n; i++)
         for (idx_t j = 0; j < n; j++)
             Z(i,j) = (i == j) ? one : zeroT;
     lacpy(Uplo::General, H, A);
+    */
+   
+    std::vector<T> eye_; auto eye = new_matrix( eye_, n, n);
+    for (idx_t i = 0; i < n; i++)
+        eye(i,i) = one;
 
     //Call hqr
     real_t norm = real_t(0.0);
-    idx_t retCode = hqr(H, 0, n - 1, wr, wi, true, Z, norm);
+    idx_t retCode = eispack_hqr(H, 0, n - 1, wr, wi, true, eye, norm);
     CHECK(retCode == 0);
 
     // Getting here means that we have successfully ran all of 
-    retCode = hqr_schurToEigen(H, 0, n - 1, wr, wi, Z, norm);
+    retCode = eispack_hqr_schurToEigen(H, 0, n - 1, wr, wi, eye, norm);
     CHECK(retCode == 0);
-    auto testingScheme = "Complex Multiplication ";
+    gemm(Op::NoTrans,Op::NoTrans, real_t(1), Q,eye,real_t(0), Z);
+    auto testingScheme = "Complex Multiplication";
     // If wanting to test with complex numbers
     if (testingScheme == "Complex Multiplication") {
         // Now, currently we are only testing matrices that are supposed to be diagonalizable

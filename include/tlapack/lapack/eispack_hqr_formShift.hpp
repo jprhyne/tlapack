@@ -1,4 +1,4 @@
-/// @file hqr_formshift.hpp
+/// @file eispack_hqr_formshift.hpp
 /// @author Johnathan Rhyne, CU Denver, USA
 /// Adapted from @see https://netlib.org/eispack/hqr2.f
 //
@@ -18,7 +18,7 @@ namespace tlapack
      *
      */
     template <class matrix_t>
-    int hqr_formShift(
+    int eispack_hqr_formShift(
         size_type<matrix_t> low,
         matrix_t &A,
         size_type<matrix_t> en,
@@ -32,8 +32,8 @@ namespace tlapack
         using idx_t = size_type<matrix_t>;
         using real_t = real_type<TA>; 
 
-        real_t constant1 = real_t(0.75);
-        real_t constant2 = real_t(-0.4375);
+        real_t const constant1 = real_t(0.75);
+        real_t const constant2 = real_t(-0.4375);
 
         // Grab the number of columns of A, we only work on square matrices
         const idx_t n = ncols(A);

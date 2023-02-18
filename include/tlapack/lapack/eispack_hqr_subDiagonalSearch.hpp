@@ -1,4 +1,4 @@
-/// @file hqr.hpp
+/// @file eispack_hqr_subDiagonalSearch.hpp
 /// @author Johnathan Rhyne, CU Denver, USA
 /// Adapted from @see https://netlib.org/eispack/hqr2.f
 //
@@ -17,7 +17,7 @@ namespace tlapack
      * @brief search for the first (coming from the bottom) index where there is a small subdiagonal element of A
      */
     template <class matrix_t>
-    int hqr_subDiagonalSearch(
+    int eispack_hqr_subDiagonalSearch(
         size_type<matrix_t> low,
         matrix_t &A,
         size_type<matrix_t> en,
