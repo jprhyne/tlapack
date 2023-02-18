@@ -111,13 +111,12 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
 
     //Call hqr
     real_t norm = real_t(0.0);
-    idx_t retCode = eispack_hqr(H, 0, n - 1, wr, wi, true, eye, norm);
+    idx_t retCode = eispack_hqr(H, 0, n - 1, wr, wi, true, Z, norm);
     CHECK(retCode == 0);
 
     // Getting here means that we have successfully ran all of 
     retCode = eispack_hqr_schurToEigen(H, 0, n - 1, wr, wi, eye, norm);
     CHECK(retCode == 0);
-    gemm(Op::NoTrans,Op::NoTrans, real_t(1), Q,eye,real_t(0), Z);
     auto testingScheme = "Complex Multiplication";
     // If wanting to test with complex numbers
     if (testingScheme == "Complex Multiplication") {
