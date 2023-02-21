@@ -18,6 +18,7 @@
 #include <tlapack/lapack/lange.hpp>
 #include <tlapack/lapack/gehrd.hpp>
 #include <tlapack/lapack/unghr.hpp>
+#include <tlapack/lapack/multishift_qr.hpp>
 
 // Auxiliary routines
 
@@ -33,8 +34,8 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     using matrix_t = TestType;
     using T = type_t<matrix_t>;
     using idx_t = size_type<matrix_t>;
-    using range = std::pair<idx_t, idx_t>;
-    typedef real_type<T> real_t;
+    using real_t = real_type<T>;
+    using complex_t = complex_type<real_t>;
 
     idx_t n;
     auto matrix_type = GENERATE(as<std::string>{}, "Full Matrix", "Inner Window");
@@ -79,6 +80,8 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     //copy H into U to ensure our
     //hessenberg reduction works as expected
     auto sim_res_norm = check_similarity_transform(A,Q,H);
+    auto normA = lange(tlapack::frob_norm, A);
+    CHECK(sim_res_norm < tol * normA);
     /*
     if (matrix_type == "Inner Window") {
         // leave above diagonal alone
@@ -98,10 +101,26 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
         }
     }
     */
+    //Call Thijs' function
+    /*
+    idx_t ns = 4;
+    idx_t nw = 4;
+    francis_opts_t<idx_t> opts;
+    opts.nshift_recommender = [ns](idx_t n, idx_t nh) -> idx_t 
+    {
+        return ns;
+    };
+    opts.deflation_window_recommender = [nw](idx_t n, idx_t nh) -> idx_t
+    {
+        return nw;
+    };
+    opts.nmin = 15;
 
+    auto s = std::vector<complex_t>(n);
+    int retCode = multishift_qr(true, true, 0, n, H, s, Q, opts);
+    */
     //Call hqr
     real_t norm = real_t(zero);
-    // REname to EISPACK_HQR
     int retCode = tlapack::eispack_hqr(H, ilo, igh, wr, wi, true, Q, norm);
     CHECK(retCode == 0);
 
@@ -119,6 +138,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
             H(i,j) = 0;
     // if eigValsImag[k]  = 0 then the sub diagonal elements need to be 0
     // If eigValsImag[k] != 0 then we have a schur block  
+    // My check
     idx_t k;
     for (k = 0; k < n-1; k++) {
         if (wi[k] == zero) {
@@ -130,8 +150,21 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
             k++;
         }
     }
+    //Check for Thijs'
+    /*
+    idx_t k;
+    for (k = 0; k < n-1; k++) {
+        if (s[k].imag() == zero) {
+            H(k+1,k) = zero;
+        } else if (k < n-2){
+            // This means we are in a schur block, so the next sub diagonal
+            // element must be 0
+            H(k+2,k+1) = zero;
+            k++;
+        }
+    }
+    */
     //  check || A - Q * H * Q^T ||_F / || A ||_F
-    auto normA = lange(tlapack::frob_norm, A);
     sim_res_norm = check_similarity_transform(A,Q,H);
     CHECK(sim_res_norm <= tol * normA);
 }
