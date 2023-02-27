@@ -105,7 +105,6 @@ namespace tlapack
         // eigenvalues
         for (i = 0; i < n; i++) {
             for (j = (i == 0) ? (i):(i-1); j < n; j++) {
-                real_t tmp = tlapack::abs(A(i,j));
                 norm += tlapack::abs(A(i,j));
             }
             if (i >= low && i <= igh)
