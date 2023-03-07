@@ -15,7 +15,15 @@
 
 namespace tlapack
 {
-    template <class matrix_t, class vector_t>
+    /**
+     * This is the real matrix eigenvector computation
+     */
+    template <class matrix_t, 
+             class vector_t, 
+             enable_if_t<
+                 !is_complex<type_t<matrix_t>>::value
+                 , int > = 0
+             >
     int eispack_hqr_schurToEigen(
         matrix_t &U,
         size_type<matrix_t> low,
@@ -222,6 +230,112 @@ namespace tlapack
 
         return 0;
     }
+    /**
+     * This is the complex matrix eigenvector computation
+     */
+    template <class matrix_t, 
+             class vector_t, 
+             enable_if_t<
+                 is_complex<type_t<matrix_t>>::value
+                 , int > = 0
+             >
+    int eispack_comqr_schurToEigen(
+        matrix_t &U,
+        size_type<matrix_t> low,
+        size_type<matrix_t> igh,
+        vector_t wr,
+        vector_t wi,
+        matrix_t &Z,
+        real_type<type_t<matrix_t>> norm )
+    {
+        using TA = type_t<matrix_t>;
+        using idx_t = size_type<matrix_t>;
+        using real_t = real_type<TA>; 
+        using complex_t = complex_type<TA>; 
+
+        // Grab the number of columns of A, we only work on square matrices
+        const idx_t n = ncols(U);
+
+        // Perform the checks for our arguments
+        tlapack_check(n == nrows(U));
+        tlapack_check((idx_t)size(wr) == n);
+        tlapack_check((idx_t)size(wi) == n);
+
+        tlapack_check((n == ncols(Z)));
+
+        // Consider adding some checks for trivial cases if needed
+        
+        complex_t cZero = complex(0,0);
+        complex_t cOne = complex(1,0);
+
+        real_t rZero = real_t(0);
+        real_t scalingFactor = real_t(100);
+
+        // Now, we actually start porting the behavior
+        idx_t en, i, j;
+        complex_t x, y, zz;
+        real_t tst1, tst2, tr;
+        // Compute the norm of U
+        norm = rZero;
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < n; j++) {
+                real_t tmp = tlapack::abs(U(i,j).real()) + tlapack::abs(U(i,j).imag());
+                norm = ((norm < tmp) ? tmp : norm);
+            }
+        }
+        for (en = n - 1; en > 0; en--) {
+            x = complex(wr[en], wi[en]);
+            U(en,en) = 1;
+            for (i = en - 1; i >= 0; i--) {
+                zz = cZero;
+                for (j=i + 1; j <= en; j++) {
+                    zz += U(i,j) * U(j,en);
+                }
+                y = x - complex(wr[i],wi[i]);
+                if (y == cZero) {
+                    tst1 = norm;
+                    y = complex(tst1,rZero);
+                    do {
+                        y = y / scalingFactor;
+                        tst2 = norm + y.real();
+                    } while (tst2 > tst1)
+                    H(i,en) = zz / y;
+                    //Overflow Control
+                    tr = tlapack::abs(U(i,j).real()) + tlapack::abs(U(i,j).imag());
+                    if (tr != 0) {
+                        tst1 = tr;
+                        tst2 = tst1 + rOne / tst1;
+                        if (tst2 <= tst1) {
+                            for (j = i; j <= en; j++){
+                                H(j,en) = H(j,en) / tr;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // This section produces the vectors of isolated roots. 
+        // In our testing we do nothing with this, however this is kept in the event
+        // that balance or a similar function is ported and/or used
+        for (idx_t i = 0; i < n; i++) {
+            if (i >= low && i <= igh) continue;
+            for (idx_t j = i; j < n; j++)
+                Z(i,j) = U(i,j);
+        }
+        // This may be able to be refactored into smarter matrix multiplication
+        for (idx_t j = n - 1; j >= low && j <= n - 1; j--) {
+            m = (j <= igh) ? (j) : (igh);
+            for (idx_t i = low; i <= igh; i++) {
+                zz = cZero;
+                for (idx_t k = low; k <= m; k++) 
+                    zz = zz + Z(i,k) * U(k,j);
+                Z(i,j) = zz;
+            }
+        }
+
+        return 0;
+    }
+
 
 } // lapack
 
