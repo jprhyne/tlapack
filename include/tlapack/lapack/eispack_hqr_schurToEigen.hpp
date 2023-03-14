@@ -265,8 +265,9 @@ namespace tlapack
 
         // Consider adding some checks for trivial cases if needed
         
-        complex_t cZero = complex(0,0);
-        complex_t cOne = complex(1,0);
+        complex_t cZero = complex_t(0,0);
+        complex_t cOne = complex_t(1,0);
+        real_t rOne = real_t(1);
 
         real_t rZero = real_t(0);
         real_t scalingFactor = real_t(100);
@@ -298,7 +299,7 @@ namespace tlapack
                     do {
                         y = y / scalingFactor;
                         tst2 = norm + y.real();
-                    } while (tst2 > tst1)
+                    } while (tst2 > tst1);
                     H(i,en) = zz / y;
                     //Overflow Control
                     tr = tlapack::abs(U(i,j).real()) + tlapack::abs(U(i,j).imag());
@@ -324,7 +325,7 @@ namespace tlapack
         }
         // This may be able to be refactored into smarter matrix multiplication
         for (idx_t j = n - 1; j >= low && j <= n - 1; j--) {
-            m = (j <= igh) ? (j) : (igh);
+            idx_t m = (j <= igh) ? (j) : (igh);
             for (idx_t i = low; i <= igh; i++) {
                 zz = cZero;
                 for (idx_t k = low; k <= m; k++) 
