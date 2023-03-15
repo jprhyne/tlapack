@@ -285,31 +285,32 @@ namespace tlapack
             }
         }
         for (en = n - 1; en > 0; en--) {
-            x = complex(wr[en], wi[en]);
+            x = complex_t(wr[en], wi[en]);
             U(en,en) = 1;
-            for (i = en - 1; i >= 0; i--) {
+            for (i = en - 1; i >= 0 && i < en; i--) {
                 zz = cZero;
                 for (j=i + 1; j <= en; j++) {
                     zz += U(i,j) * U(j,en);
                 }
-                y = x - complex(wr[i],wi[i]);
+                y = x - complex_t(wr[i],wi[i]);
                 if (y == cZero) {
                     tst1 = norm;
-                    y = complex(tst1,rZero);
+                    y = complex_t(tst1,rZero);
                     do {
                         y = y / scalingFactor;
                         tst2 = norm + y.real();
                     } while (tst2 > tst1);
-                    H(i,en) = zz / y;
-                    //Overflow Control
-                    tr = tlapack::abs(U(i,j).real()) + tlapack::abs(U(i,j).imag());
-                    if (tr != 0) {
-                        tst1 = tr;
-                        tst2 = tst1 + rOne / tst1;
-                        if (tst2 <= tst1) {
-                            for (j = i; j <= en; j++){
-                                H(j,en) = H(j,en) / tr;
-                            }
+                }
+                U(i,en) = zz / y;
+                //Overflow Control
+                tr = tlapack::abs(U(i,en).real()) + tlapack::abs(U(i,en).imag());
+                // Consider scaling on every iteration?
+                if (tr != 0) {
+                    tst1 = tr;
+                    tst2 = tst1 + rOne / tst1;
+                    if (tst2 <= tst1) {
+                        for (j = i; j <= en; j++){
+                            U(j,en) = U(j,en) / tr;
                         }
                     }
                 }
