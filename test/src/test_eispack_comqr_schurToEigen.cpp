@@ -1,4 +1,4 @@
-/// @file test_eispack_hqr_schurToEigen.cpp
+/// @file test_eispack_comqr_schurToEigen.cpp
 /// @brief Test HQR. 
 //
 // Copyright (c) 2022, University of Colorado Denver. All rights reserved.
@@ -123,112 +123,42 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_COM
         //retCode = eispack_hqr(H, 0, n - 1, s, true, Z, norm);
         //CHECK(retCode == 0);
     }
-    // TODO: Add a way to determine if we are testing real or complex numbers then 
     // call hqr and comqr respectively
     // Getting here means that we have successfully ran all of hqr
     retCode = eispack_comqr_schurToEigen(H, 0, n - 1, s, Z, norm);
     CHECK(retCode == 0);
-    // TODO: Add a way to determine if we are testing real or complex numbers then 
-    // if complex always do #1 and construct our matrices more smartly
-    // We have two kinds of testing schemes.
-    // 1) Complex numbers. This is more of a legacy check and is kept in case our real tests break.
-    //      Can remove at some point if we need to
-    // 2) Real numbers. This way treats our matrices as their real meanings. This is because
-    //      even though we get complex eigenvalues, the real and imaginary parts represent a 
-    //      kind of invariant subspace.
-    auto testingScheme = "Complex Multiplication";
-    // If wanting to test with complex numbers
-    if (testingScheme == "Complex Multiplication") {
-        // Now, currently we are only testing matrices that are supposed to be diagonalizable
-        // We will test representativity by constructing a matrix Zc such that Zc contains 
-        // the eigenvectors stored in Z but as complex numbers
-        // Similarly, do so for Dc containing the eigenvalues stored as complex numbers
-        std::vector<std::complex<real_t>> Zc_; auto Zc = new_matrixC( Zc_, n, n);
-	    lacpy(Uplo::General,Z,Zc);
-        std::vector<std::complex<real_t>> Zi_; auto Zi = new_matrixC( Zi_, n, n);
-        lacpy(Uplo::General, Zc, Zi);
-        std::vector<idx_t> Piv(n);
-        // Perform LU Decomp of Zi
-        retCode = getrf(Zi,Piv);
-        CHECK(retCode == 0); // Ensure we properly computed the LU
-        // Now compute the inverse of Zi
-        // Note: This function is somehow treating Piv as a vector of complex numbers
-        retCode = getri(Zi,Piv);
-        CHECK(retCode == 0); // Ensure we properly computed the Inverse
-        // Now test VDV^{-1} - A
-        std::vector<std::complex<real_t>> lhs_; auto lhs = new_matrixC( lhs_, n, n);
-        std::vector<std::complex<real_t>> Dc_; auto Dc = new_matrixC( Dc_, n, n);
-        for (idx_t i = 0; i < n; i++)
-            Dc(i,i) = s[i];
-        // We need to also construct Ac which is just a complex equivalent of A
-        // with 0 for all imaginary parts
-        std::vector<std::complex<real_t>> Ac_; auto Ac = new_matrixC( Ac_, n, n);
-	lacpy(Uplo::General, A, Ac);
+    // We will test representativity by constructing a matrix Zc such that Zc contains 
+    // the eigenvectors stored in Z but as complex numbers
+    // Similarly, do so for Dc containing the eigenvalues stored as complex numbers
+    std::vector<std::complex<real_t>> Zc_; auto Zc = new_matrixC( Zc_, n, n);
+	lacpy(Uplo::General,Z,Zc);
+    std::vector<std::complex<real_t>> Zi_; auto Zi = new_matrixC( Zi_, n, n);
+    lacpy(Uplo::General, Zc, Zi);
+    std::vector<idx_t> Piv(n);
+    // Perform LU Decomp of Zi
+    retCode = getrf(Zi,Piv);
+    CHECK(retCode == 0); // Ensure we properly computed the LU
+    // Now compute the inverse of Zi
+    // Note: This function is somehow treating Piv as a vector of complex numbers
+    retCode = getri(Zi,Piv);
+    CHECK(retCode == 0); // Ensure we properly computed the Inverse
+    // Now test VDV^{-1} - A
+    std::vector<std::complex<real_t>> lhs_; auto lhs = new_matrixC( lhs_, n, n);
+    std::vector<std::complex<real_t>> Dc_; auto Dc = new_matrixC( Dc_, n, n);
+    for (idx_t i = 0; i < n; i++)
+        Dc(i,i) = s[i];
+    // We need to also construct Ac which is just a complex equivalent of A
+    // with 0 for all imaginary parts
+    std::vector<std::complex<real_t>> Ac_; auto Ac = new_matrixC( Ac_, n, n);
+    lacpy(Uplo::General, A, Ac);
     
-        gemm(Op::NoTrans, Op::NoTrans, real_t(1), Zc, Dc, lhs);
-        // Note: This overwrites A, but we already have the norm of A saved from hqr
-        gemm(Op::NoTrans, Op::NoTrans, real_t(1), lhs, Zi, real_t(-1), Ac);
-        // Compute the frobenius norm of the residual
-        real_t normR = lange(tlapack::frob_norm, Ac);
-        real_t normZ = lange(tlapack::frob_norm, Zc);
-        real_t normZi = lange(tlapack::frob_norm, Zi);
-        real_t normD = lange(tlapack::frob_norm, Dc);
-        CHECK(normR <= tol * normZ * normZi * normD);
-    } else {
-        // This means our testing Scheme is going to be using only real arithmetic
-        // So we will have to construct our diagonal matrix much more carefully
-        std::vector<T> D_; auto D = new_matrix(D_, n, n);
-        for (idx_t j = 0; j < n; j++) {
-            // From here we need to determine if our eigenvalue is real or complex
-            // if it is complex, then we must create a 2x2 block of the form
-            // ( wr[j] wi[j]
-            //  -wi[j] wr[j] )
-            // Then skip over the next eigenvalue as wr and wi contain the conjugate pairs
-            if (s[j].imag() != real_t(0)) {
-                D(j,j) = s[j].real();
-                D(j + 1,j + 1) = s[j].real();
-                D(j, j + 1) = s[j].imag();
-                D(j + 1, j) = -s[j].imag();
-                j++;
-            } else {
-                // Otherwise we just put the real eigenvalue on the diagonal
-                D(j,j) = s[j].real();
-            }
-        }
-        // Now we can do basically what is above to test if we have the correct form
-        // Now, construct Zi 
-        std::vector<T> Zi_; auto Zi = new_matrix( Zi_, n, n);
-        lacpy(Uplo::General, Z, Zi);
-        std::vector<idx_t> Piv(n);
-        // Perform LU Decomp of Zi
-        //retCode = getrf(Zi,Piv);
-        CHECK(retCode == 0); // Ensure we properly computed the LU
-        // Now compute the inverse of Zi
-        retCode = getri(Zi,Piv);
-        CHECK(retCode == 0); // Ensure we properly computed the Inverse
-        // This will store the final result for our first representativity check
-        std::vector<T> firstCheck_; auto firstCheck = new_matrix( firstCheck_, n, n);
-        // This will store the final result for our second representativity check
-        std::vector<T> secondCheck_; auto secondCheck = new_matrix( secondCheck_, n, n);
-        std::vector<T> tmp_; auto tmp = new_matrix( tmp_, n, n);
-
-
-        // Now test VDV^{-1} - A
-        gemm(Op::NoTrans, Op::NoTrans, real_t(1), Z, D, firstCheck);
-        // We store this inside secondCheck mostly to prevent us from having to compute it again
-        lacpy(Uplo::General, firstCheck, secondCheck);
-        lacpy(Uplo::General, A, tmp);
-        gemm(Op::NoTrans, Op::NoTrans, real_t(1), firstCheck, Zi, real_t(-1), tmp);
-        // Compute the frobenius norm of the residual
-        real_t normR = lange(tlapack::frob_norm, tmp);
-        CHECK(normR <= tol * norm);
-
-        // Now, we check VD = AV ie VD - AV
-        // We already have VD from above, we create another temporary place to store AV
-        gemm(Op::NoTrans, Op::NoTrans, real_t(1), A, Z, real_t(-1), secondCheck);
-
-        normR = lange(tlapack::frob_norm, secondCheck);
-        CHECK(normR <= tol * norm);
-
-    }
+    gemm(Op::NoTrans, Op::NoTrans, real_t(1), Zc, Dc, lhs);
+    // Note: This overwrites A, but we already have the norm of A saved from hqr
+    gemm(Op::NoTrans, Op::NoTrans, real_t(1), lhs, Zi, real_t(-1), Ac);
+    // Compute the frobenius norm of the residual
+    real_t normR = lange(tlapack::frob_norm, Ac);
+    real_t normZ = lange(tlapack::frob_norm, Zc);
+    real_t normZi = lange(tlapack::frob_norm, Zi);
+    real_t normD = lange(tlapack::frob_norm, Dc);
+    CHECK(normR <= tol * normZ * normZi * normD);
 }
