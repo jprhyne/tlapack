@@ -85,7 +85,6 @@ namespace tlapack
             q = q / p;
             r = r / p;
             if (notLast) {
-                // Try doing nothing depending on behavior
                 idx_t upperBound = (want_Q) ? n - 1 : en;
     //c     .......... row modification ..........
                 for (j = k; j <= upperBound; j++) {
@@ -150,4 +149,4 @@ namespace tlapack
     }
 } // lapack
 
-#endif // TLAPACK_HQR_FORMSHIFT_HH
+#endif // TLAPACK_HQR_QRITER_HH
