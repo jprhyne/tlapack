@@ -59,8 +59,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     std::vector<T> A_; auto A = new_matrix( A_, n, n);
     std::vector<T> H_; auto H = new_matrix( H_, n, n);
     std::vector<T> Q_; auto Q = new_matrix( Q_, n, n);
-    std::vector<T> wr(n);
-    std::vector<T> wi(n);
+    auto s = std::vector<complex_t>(n);
     //Populate A and U with random numbers
     for(idx_t i = 0; i < n; i++) {
         for(idx_t j = 0; j < n; j++) {
@@ -102,16 +101,10 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     
         auto s = std::vector<complex_t>(n);
         retCode = multishift_qr(true, true, 0, n, H, s, Q, opts);
-        // Because I'm lazy, we copy s into wr and wi until I properly implement
-        // the complex vector part
-        for (idx_t i = 0; i < n; i++) {
-            wr[i] = s[i].real();
-            wi[i] = s[i].imag();
-        }
     } else {
         //Call hqr
         real_t norm = real_t(zero);
-        retCode = tlapack::eispack_hqr(H, ilo, igh, wr, wi, true, Q, norm);
+        retCode = tlapack::eispack_hqr(H, ilo, igh, s, true, Q, norm);
 
     }
     CHECK(retCode == 0);
@@ -133,7 +126,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     // My check
     idx_t k;
     for (k = 0; k < n-1; k++) {
-        if (wi[k] == zero) {
+        if (s[k].imag() == zero) {
             H(k+1,k) = zero;
         } else if (k < n-2){
             // This means we are in a schur block, so the next sub diagonal

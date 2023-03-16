@@ -67,11 +67,9 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_COM
     std::vector<T> A_; auto A = new_matrix( A_, n, n);
     std::vector<T> H_; auto H = new_matrix( H_, n, n);
     std::vector<T> Z_; auto Z = new_matrix( Z_, n, n);
-    std::vector<real_t> wr(n);
-    std::vector<real_t> wi(n);
+    std::vector<complex_t> s(n);
     for (idx_t i = 0; i < n; i++) {
-        wr[i] = rand_helper<real_t>(gen);
-        wi[i] = rand_helper<real_t>(gen);
+        s[i] = complex_t(rand_helper<real_t>(gen), rand_helper<real_t>(gen));
     }
 
     // Generate our matrix A as a full matrix and then reduce it to 
@@ -117,25 +115,18 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_COM
         for (idx_t i = 0; i < n; i++) 
             for (idx_t j = 0; j < n; j++) 
                 norm += tlapack::abs(H(i,j));
-        auto s = std::vector<complex_t>(n);
         retCode = multishift_qr(true, true, 0, n, H, s, Z, opts);
         // Ensure we actually finished hqr.
         CHECK(retCode == 0);
-        // Because I'm lazy, we copy s into wr and wi until I properly implement
-        // the complex vector part
-        for (idx_t i = 0; i < n; i++) {
-            wr[i] = s[i].real();
-            wi[i] = s[i].imag();
-        }
     } else {
         //Call hqr
-        //retCode = eispack_hqr(H, 0, n - 1, wr, wi, true, Z, norm);
+        //retCode = eispack_hqr(H, 0, n - 1, s, true, Z, norm);
         //CHECK(retCode == 0);
     }
     // TODO: Add a way to determine if we are testing real or complex numbers then 
     // call hqr and comqr respectively
     // Getting here means that we have successfully ran all of hqr
-    retCode = eispack_comqr_schurToEigen(H, 0, n - 1, wr, wi, Z, norm);
+    retCode = eispack_comqr_schurToEigen(H, 0, n - 1, s, Z, norm);
     CHECK(retCode == 0);
     // TODO: Add a way to determine if we are testing real or complex numbers then 
     // if complex always do #1 and construct our matrices more smartly
@@ -168,7 +159,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_COM
         std::vector<std::complex<real_t>> lhs_; auto lhs = new_matrixC( lhs_, n, n);
         std::vector<std::complex<real_t>> Dc_; auto Dc = new_matrixC( Dc_, n, n);
         for (idx_t i = 0; i < n; i++)
-            Dc(i,i) = complex_t(wr[i], wi[i]);
+            Dc(i,i) = s[i];
         // We need to also construct Ac which is just a complex equivalent of A
         // with 0 for all imaginary parts
         std::vector<std::complex<real_t>> Ac_; auto Ac = new_matrixC( Ac_, n, n);
@@ -193,15 +184,15 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_COM
             // ( wr[j] wi[j]
             //  -wi[j] wr[j] )
             // Then skip over the next eigenvalue as wr and wi contain the conjugate pairs
-            if (wi[j] != real_t(0)) {
-                D(j,j) = wr[j];
-                D(j + 1,j + 1) = wr[j];
-                D(j, j + 1) = wi[j];
-                D(j + 1, j) = - wi[j];
+            if (s[j].imag() != real_t(0)) {
+                D(j,j) = s[j].real();
+                D(j + 1,j + 1) = s[j].real();
+                D(j, j + 1) = s[j].imag();
+                D(j + 1, j) = -s[j].imag();
                 j++;
             } else {
                 // Otherwise we just put the real eigenvalue on the diagonal
-                D(j,j) = wr[j];
+                D(j,j) = s[j].real();
             }
         }
         // Now we can do basically what is above to test if we have the correct form

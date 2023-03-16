@@ -22,28 +22,30 @@ namespace tlapack
              class vector_t, 
              enable_if_t<
                  !is_complex<type_t<matrix_t>>::value
-                 , int > = 0
+                 , int > = 0,
+             enable_if_t<is_complex<type_t<vector_t>>::value,
+                int> = 0
              >
+
     int eispack_hqr_schurToEigen(
         matrix_t &U,
         size_type<matrix_t> low,
         size_type<matrix_t> igh,
-        vector_t wr,
-        vector_t wi,
+        vector_t eigs,
         matrix_t &Z,
         real_type<type_t<matrix_t>> norm )
     {
         using TA = type_t<matrix_t>;
         using idx_t = size_type<matrix_t>;
         using real_t = real_type<TA>; 
+        using complex_t = type_t<vector_t>;
 
         // Grab the number of columns of A, we only work on square matrices
         const idx_t n = ncols(U);
 
         // Perform the checks for our arguments
         tlapack_check(n == nrows(U));
-        tlapack_check((idx_t)size(wr) == n);
-        tlapack_check((idx_t)size(wi) == n);
+        tlapack_check((idx_t)size(eigs) == n);
 
         tlapack_check((n == ncols(Z)));
 
@@ -68,8 +70,8 @@ namespace tlapack
             return 2;
         }
         for (en = n - 1; en >= 0 && en <= n - 1; en--) {
-            p = wr[en];
-            q = wi[en];
+            p = eigs[en].real();
+            q = eigs[en].imag();
             // Note: We do nothing if the imaginary part is positive. This comes from our 
             // construction of the eigenvectors. See the above documentation for the structure.
             if (q == zero) {
@@ -82,13 +84,13 @@ namespace tlapack
                         r = zero;
                         for (idx_t j = m; j <= en; j++)
                             r += U(i,j) * U(j,en);
-                        if (wi[i] < zero) {
+                        if (eigs[i].imag() < zero) {
                             zz = w;
                             s = r;
                             continue;
                         } 
                         m = i;
-                        if (wi[i] == zero) {
+                        if (eigs[i].imag() == zero) {
                             t = w;
                             if (t == zero) {
                                 tst1 = norm;
@@ -102,7 +104,7 @@ namespace tlapack
                         } else {
                             x = U(i, i + 1);
                             y = U(i + 1, i);
-                            q = (wr[i] - p) * (wr[i] - p) + wi[i] * wi[i];
+                            q = (eigs[i].real() - p) * (eigs[i].real() - p) + eigs[i].imag() * eigs[i].imag();
                             t = (x * s - zz * r) / q;
                             U(i, en) = t;
                             if (tlapack::abs(x) > tlapack::abs(zz))
@@ -147,14 +149,14 @@ namespace tlapack
                             ra = ra + U(i,j) * U(j,en - 1);
                             sa = sa + U(i,j) * U(j,en);
                         }
-                        if (wi[i] < zero) {
+                        if (eigs[i].imag() < zero) {
                             zz = w;
                             r = ra;
                             s = sa;
                             continue;
                         }
                         m = i;
-                        if (wi[i] == zero) {
+                        if (eigs[i].imag() == zero) {
                             real_t a = zero;
                             real_t b = zero;
                             cdiv(-ra, -sa, w, q, a, b);
@@ -164,8 +166,8 @@ namespace tlapack
                             // solve complex equations
                             x = U(i, i + 1);
                             y = U(i + 1, i);
-                            vr = (wr[i] - p) * (wr[i] - p) + wi[i] * wi[i] - q * q;
-                            vi = (wr[i] - p) * two * q;
+                            vr = (eigs[i].real() - p) * (eigs[i].real() - p) + eigs[i].imag() * eigs[i].imag() - q * q;
+                            vi = (eigs[i].real() - p) * two * q;
                             if (vr == zero && vi == zero) {
                                 tst1 = norm * (tlapack::abs(w) + tlapack::abs(q) + tlapack::abs(x) + tlapack::abs(y) + tlapack::abs(zz));
                                 vr = tst1;
@@ -243,8 +245,7 @@ namespace tlapack
         matrix_t &U,
         size_type<matrix_t> low,
         size_type<matrix_t> igh,
-        vector_t wr,
-        vector_t wi,
+        vector_t eigs,
         matrix_t &Z,
         real_type<type_t<matrix_t>> norm )
     {
@@ -258,8 +259,7 @@ namespace tlapack
 
         // Perform the checks for our arguments
         tlapack_check(n == nrows(U));
-        tlapack_check((idx_t)size(wr) == n);
-        tlapack_check((idx_t)size(wi) == n);
+        tlapack_check((idx_t)size(eigs) == n);
 
         tlapack_check((n == ncols(Z)));
 
@@ -285,14 +285,14 @@ namespace tlapack
             }
         }
         for (en = n - 1; en > 0; en--) {
-            x = complex_t(wr[en], wi[en]);
+            x = eigs[en];
             U(en,en) = 1;
             for (i = en - 1; i >= 0 && i < en; i--) {
                 zz = cZero;
                 for (j=i + 1; j <= en; j++) {
                     zz += U(i,j) * U(j,en);
                 }
-                y = x - complex_t(wr[i],wi[i]);
+                y = x - eigs[i];
                 if (y == cZero) {
                     tst1 = norm;
                     y = complex_t(tst1,rZero);

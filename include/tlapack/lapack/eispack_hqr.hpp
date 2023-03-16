@@ -62,13 +62,17 @@ namespace tlapack
      *      The sum of the absolute elements of the upper hessenberg portion of A used for
      *      computing the eigenvectors of A after computing the Schur vectors
      */
-    template <class matrix_t, class vector_t>
+    template <class matrix_t, 
+             class vector_t,
+             enable_if_t<
+                 is_complex<type_t<vector_t>>::value, 
+                int> = 0
+                >
     int eispack_hqr(
         matrix_t &A,
         size_type<matrix_t> low,
         size_type<matrix_t> igh,
-        vector_t &wr,
-        vector_t &wi,
+        vector_t &eigs,
         bool want_Q,
         matrix_t &Q,
         real_type<type_t<matrix_t>> &norm )
@@ -76,6 +80,7 @@ namespace tlapack
         using TA = type_t<matrix_t>;
         using idx_t = size_type<matrix_t>;
         using real_t = real_type<TA>; 
+        using complex_t = type_t<vector_t>;
         // Constants
         real_t zero = real_t(0);
         real_t one = real_t(1);
@@ -85,8 +90,7 @@ namespace tlapack
 
         // Perform the checks for our arguments
         tlapack_check(n == nrows(A));
-        tlapack_check((idx_t)size(wr) == n);
-        tlapack_check((idx_t)size(wi) == n);
+        tlapack_check((idx_t)size(eigs) == n);
 
         if (want_Q) {
             // If we want the Schur Vectors, we need to make sure that Q is the right size
@@ -109,8 +113,7 @@ namespace tlapack
             }
             if (i >= low && i <= igh)
                 continue;
-            wr[i] = A(i, i);
-            wi[i] = zero;
+            eigs[i] = complex_t(A(i,i), zero);
         }
 
         // Initialize some more variables
@@ -152,8 +155,7 @@ namespace tlapack
                 // This means we found a single root
                 if (want_Q)
                     A(en, en) = x + t;
-                wr[en] = x + t;
-                wi[en] = zero;
+                eigs[en] = complex_t(x+t, zero);
                 en -= 1;
                 foundEigenValue = true;
             } else {
@@ -184,20 +186,20 @@ namespace tlapack
                 x = x + t;
                 if ( q < zero ) {
                     // This means we found a complex pair
-                    wr[en - 1] = x + p;
-                    wr[en] = x + p;
-                    wi[en - 1] = zz;
-                    wi[en] = -zz;
+                    eigs[en - 1] = complex_t(x + p, zz);
+                    eigs[en] = complex_t(x + p, -zz);
                 } else {
                     // Otherwise we have a real pair
                     if (p >= zero) 
                         zz = p + tlapack::abs(zz);
                     else
                         zz = p - tlapack::abs(zz);
-                    wr[en - 1] = x + zz;
-                    wr[en] = (zz == zero) ? (wr[en - 1]) : (x - w / zz);
-                    wi[en - 1] = zero;
-                    wi[en] = zero;
+                    eigs[en - 1] = complex_t(x+zz, zero);
+                    if (zz == zero)
+                        eigs[en] = eigs[en - 1];
+                    else
+                        eigs[en] = complex_t(x - w/zz, zero);
+                        
                     if (want_Q) {
                         x = A(en, en - 1);
                         s = tlapack::abs(x) + tlapack::abs(zz);
