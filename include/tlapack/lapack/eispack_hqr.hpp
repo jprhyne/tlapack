@@ -14,10 +14,10 @@
 
 #include <functional>
 
-#include "tlapack/lapack/eispack_hqr_subDiagonalSearch.hpp"
-#include "tlapack/lapack/eispack_hqr_formShift.hpp"
-#include "tlapack/lapack/eispack_hqr_doubleSubDiagonalSearch.hpp"
-#include "tlapack/lapack/eispack_hqr_qrIteration.hpp"
+#include "tlapack/lapack/eispack_subDiagonalSearch.hpp"
+#include "tlapack/lapack/eispack_formShift.hpp"
+#include "tlapack/lapack/eispack_doubleSubDiagonalSearch.hpp"
+#include "tlapack/lapack/eispack_qrIteration.hpp"
 
 
 namespace tlapack
@@ -232,10 +232,9 @@ namespace tlapack
                 foundEigenValue = true;
             } 
             if (!foundEigenValue) {
-                // We want to potentially shift if we did not find an eigenvalue and our check
-                // must be done before the QR Step
-                // We can put this check inside of formShift if we want to support shifts on 
-                // every iteration or on a different about of iterations
+                // This is performing an "exceptional"
+                // shift, so we sometimes perform a single
+                // shift if we are exceptionally unlucky. We do an extra single shift.
                 if (its % 10 == 0 && its > 0)
                     eispack_hqr_formShift(low, A, en, s, t, x, y, w);
                 // We only do a QR step if we did not find an eigenvalue
@@ -249,6 +248,99 @@ namespace tlapack
 
         }
         return 0;
+    }
+
+    /*
+     * Note: We do not actually use the norm value here,
+     * however we keep it in the interface to make it the same as above
+     */
+    template <class matrix_t, 
+             class vector_t,
+             enable_if_t<
+                 is_complex<type_t<vector_t>>::value, 
+                int> = 0
+                >
+    int eispack_comqr(
+        matrix_t &A,
+        size_type<matrix_t> low,
+        size_type<matrix_t> igh,
+        vector_t &eigs,
+        bool want_Q,
+        matrix_t &Q,
+        real_type<type_t<matrix_t>> &norm )
+    {
+        using TA = type_t<matrix_t>;
+        using idx_t = size_type<matrix_t>;
+        using real_t = real_type<TA>; 
+        using complex_t = type_t<vector_t>;
+        // Constants
+        real_t zero = real_t(0);
+        real_t one = real_t(1);
+
+        // Grab the number of columns of A, we only work on square matrices
+        const idx_t n = ncols(A);
+
+        // Perform the checks for our arguments
+        tlapack_check(n == nrows(A));
+        tlapack_check((idx_t)size(eigs) == n);
+
+        if (want_Q) {
+            // If we want the Schur Vectors, we need to make sure that Q is the right size
+            tlapack_check((n == ncols(Q)));
+        }
+
+        // Consider adding some checks for trivial cases if needed
+
+        // Now, we actually start porting the behavior
+        // Constructing real sub diagonal elements
+        for (idx_t i = low + 1; i <= igh; i++) {
+            l = (i + 1 < igh) ? (i + 1) : (igh);
+            if (A(i,i-1).imag() == 0)
+                continue;
+            norm = sqrt(tlapack::abs(H(i,i-1)));
+            y = H(i, i - 1)/norm;
+            H(i, i - 1) = complex_t(norm, 0);
+            for (idx_t j = i; j <= igh; j++)
+                H(i,j) = H(i,j) * conj(y);
+            for (idx_t j = low; j <= l; j++)
+                H(j,i) = conj(H(j,i)) * y;
+        }
+        // Store the isolated roots
+        for (idx_t i = 0; i <= n - 1; i++)
+            if (i < low || i > igh)
+                eigs[i] = H(i,i);
+
+        complex_t s,x,y,zz;
+        idx_t en = igh;
+        complex_t t = 0;
+        idx_t itn = 30 * n;
+        idx_t its = 0;
+        while (en >= low) {
+            if (!didQRStep)
+                its = 0;
+            bool didQRStep = false;
+
+            // We want to check here if we have exhausted our iterations ie if itn == 0. If so, we immediately
+            // terminate and return the index of failure
+            if (itn == 0)
+                return en;
+
+            // Perform a subdiagonal search to determine where the first
+            // small subdiagonal element is
+            l = eispack_comqr_subDiagonalSearch(low,A,en);
+            if (l == en) {
+                // Means we have found a root
+                eigs[en] = A(en,en) + t;
+                continue;
+            }
+            // Compute the shift and do it on the diagonal of A. In addition, accumulate that shift
+            eispack_comqr_formShift(low, A, its, en, s, t, x, y, zz);
+            // Update the number of iterations we have done so far
+            its++;
+            itn--;
+            eispack_comqr_qrIteration(A,en,l,s,x,y,zz,want_Q,low,igh,Q);
+            didQRStep = true;
+        }
     }
 
 } // lapack

@@ -52,6 +52,53 @@ namespace tlapack
 
     }
 
+    template <class matrix_t>
+    int eispack_comqr_formShift(
+        size_type<matrix_t> low,
+        matrix_t &A,
+        size_type<matrix_t> its,
+        size_type<matrix_t> en,
+        type_t<matrix_t> &s,
+        type_t<matrix_t> &t,
+        type_t<matrix_t> &x,
+        type_t<matrix_t> &y,
+        type_t<matrix_t> &zz )
+    {
+        using TA = type_t<matrix_t>;
+        using idx_t = size_type<matrix_t>;
+        using real_t = real_type<TA>; 
+        using complex_t = complex_type<TA>; 
+
+        const complex_t cZero = complex_t(0);
+        const real_t rZero = real_t(0);
+        const real_t two = real_t(2);
+        // Compute our shift
+        if (its > 0 && its % 10 == 0) {
+            // Exceptional Shift
+            s = complex_t(tlapack::abs(A(en, en - 1).real()) + A(en - 1, en - 2).real(), rZero);
+        } else {
+            s = A(en,en);
+            x = complex_t(A(en -1, en).real() * A(en, en - 1).real(), A(en -1, en).imag() * A(en, en - 1).imag());
+            if (x == cZero)
+                return;
+            y = (A(en - 1, en - 1) - s) / two;
+            complex_t insideSqrt = complex_t(y.real() * y.real() - y.imag()*y.imag() + x.real(), two * y.real() * y.imag() + x.imag());
+            zz = sqrt(insideSqrt);
+            complex_t tst = y * conj(zz)
+            if (tst.real() < rZero) {
+                zz *= -1;
+            }
+            x = x / (y + zz);
+            s -= x;
+        }
+        // Perform the shift
+        for (idx_t i = low; i <= en; i++)
+            A(i,i) -= s;
+        // Accumulate our shift for use later
+        t += s;
+        return;
+    }
+
 } // lapack
 
 #endif // TLAPACK_HQR_FORMSHIFT_HH

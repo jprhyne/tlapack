@@ -147,6 +147,77 @@ namespace tlapack
         }
         return 0;
     }
+
+    template <class matrix_t>
+    int eispack_comqr_qrIteration(
+        matrix_t &A,
+        size_type<matrix_t> en,
+        size_type<matrix_t> l,
+        real_type<type_t<matrix_t>> &s,
+        real_type<type_t<matrix_t>> &x,
+        real_type<type_t<matrix_t>> &y,
+        real_type<type_t<matrix_t>> &zz,
+        bool want_Q,
+        size_type<matrix_t> low,
+        size_type<matrix_t> igh,
+        matrix_t &Q)
+    {
+        using TA = type_t<matrix_t>;
+        using idx_t = size_type<matrix_t>;
+        using real_t = real_type<TA>; 
+
+        real_t zero = real_t(0);
+
+        // Grab the number of columns of A, we only work on square matrices
+        const idx_t n = ncols(A);
+        real_t norm;
+
+        // Perform the checks for our arguments
+        tlapack_check(n == nrows(A));
+
+        // Reduce to triangle (rows)
+        for (idx_t i = l + 1; i <= en; i++) {
+            norm = sqrt(tlapack::abs(sqrt(tlapack::abs(A(i - 1, i - 1))) + A(i,i-1))); // This is ugly
+            x = A(i - 1, i - 1) / norm; // Never checks if A is the zero matrix...
+            eigs[i-1] = x;
+            A(i - 1, i - 1) = complex_t(norm,0);
+            A(i, i - 1) = complex_t(0, A(i, i-1).imag()/norm);
+            for (idx_t j = i; j <= en; j++) {
+                y = A(i - 1, j);
+                zz = A(i,j);
+                A(i - 1, j) = x * conj(y) + complex_t(A(i, i -1).imag * zz.real(), A(i, i - 1).imag() * zz.imag());
+                A(i,j) = x * zz - complex_t(A(i, i - 1).imag() & y.real(), A(i, i - 1).imag() * y.imag());
+            }
+        }
+
+        if (A(en, en) != 0) {
+            norm = sqrt(tlapack::abs(A(en,en)));
+            s = A(en,en) / norm;
+            A(en,en) = complex_t(norm);
+        }
+
+        // Inverse operation (columns)
+        for (idx_t j = l + 1; j <= en; j++) {
+            x = eigs[j - 1];
+            for (idx_t i = l; i <= j; i++) {
+                y = (i == j) ? (complex_t(A(i, j - 1).real(), 0)) : (A(i, j - 1));
+                zz = A(i,j);
+                complex_t setVal = x * y + complex_t(A(j,j - 1).imag() * zz.real(), A(j,j - 1).imag() * zz.imag());
+                if ( i == j ) {
+                    A(i,j - 1) = complex_t(setVal.real(), A(i,j - 1).imag());
+                } else {
+                    A(i, j - 1) = setVal;
+                }
+
+                A(i,j) = x * conj(zz) - complex_t(A(j,j - 1).imag() * y.real(), A(j, j - 1).imag() * y.imag());
+            }
+        }
+        if (s.imag() != 0) {
+            for (idx_t i = l; i <= en; i++) 
+                A(i,en) = s * A(i,en);
+        }
+        return;
+    }
 } // lapack
 
 #endif // TLAPACK_HQR_QRITER_HH

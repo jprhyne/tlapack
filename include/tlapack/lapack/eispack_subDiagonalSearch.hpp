@@ -48,6 +48,34 @@ namespace tlapack
         }
         return low;
     }
+
+    template <class matrix_t>
+    int eispack_comqr_subDiagonalSearch(
+        size_type<matrix_t> low,
+        matrix_t &A,
+        size_type<matrix_t> en)
+    {
+        using TA = type_t<matrix_t>;
+        using idx_t = size_type<matrix_t>;
+        using real_t = real_type<TA>; 
+
+        real_t zero = real_t(0);
+
+        // Grab the number of columns of A, we only work on square matrices
+        const idx_t n = ncols(A);
+
+        // Perform the checks for our arguments
+        tlapack_check(n == nrows(A));
+
+
+        for (idx_t l = en; l <= en && l > low; l--) {
+            real_t tst1 = tlapack::abs(A(l-1,l-1).real()) + tlapack::abs(A(l-1,l-1).imag()) + tlapack::abs(A(l,l).real()) + tlapack::abs(A(l,l).imag());
+            real_t tst2 = tst1 + tlapack::abs(A(l,l - 1));
+            if (tst1 == tst2)
+                return l;
+        }
+        return low;
+    }
 } // lapack
 
 #endif // TLAPACK_HQR_SUBDIAGSEARCH_HH
