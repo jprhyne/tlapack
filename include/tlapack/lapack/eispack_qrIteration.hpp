@@ -148,7 +148,7 @@ namespace tlapack
         return 0;
     }
 
-    template <class matrix_t>
+    template <class matrix_t, class vector_t>
     int eispack_comqr_qrIteration(
         matrix_t &A,
         size_type<matrix_t> en,
@@ -157,6 +157,7 @@ namespace tlapack
         real_type<type_t<matrix_t>> &x,
         real_type<type_t<matrix_t>> &y,
         real_type<type_t<matrix_t>> &zz,
+        vector_t &eigs,
         bool want_Q,
         size_type<matrix_t> low,
         size_type<matrix_t> igh,
@@ -165,6 +166,7 @@ namespace tlapack
         using TA = type_t<matrix_t>;
         using idx_t = size_type<matrix_t>;
         using real_t = real_type<TA>; 
+        using complex_t = complex_type<TA>; 
 
         real_t zero = real_t(0);
 
@@ -216,7 +218,7 @@ namespace tlapack
             for (idx_t i = l; i <= en; i++) 
                 A(i,en) = s * A(i,en);
         }
-        return;
+        return 0;
     }
 } // lapack
 

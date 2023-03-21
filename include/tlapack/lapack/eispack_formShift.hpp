@@ -80,11 +80,11 @@ namespace tlapack
             s = A(en,en);
             x = complex_t(A(en -1, en).real() * A(en, en - 1).real(), A(en -1, en).imag() * A(en, en - 1).imag());
             if (x == cZero)
-                return;
+                return 0;
             y = (A(en - 1, en - 1) - s) / two;
             complex_t insideSqrt = complex_t(y.real() * y.real() - y.imag()*y.imag() + x.real(), two * y.real() * y.imag() + x.imag());
             zz = sqrt(insideSqrt);
-            complex_t tst = y * conj(zz)
+            complex_t tst = y * conj(zz);
             if (tst.real() < rZero) {
                 zz *= -1;
             }
@@ -96,7 +96,7 @@ namespace tlapack
             A(i,i) -= s;
         // Accumulate our shift for use later
         t += s;
-        return;
+        return 0;
     }
 
 } // lapack

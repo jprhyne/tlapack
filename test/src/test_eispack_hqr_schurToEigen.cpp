@@ -20,7 +20,7 @@
 #include <tlapack/blas/gemm.hpp>
 
 #include <tlapack/lapack/eispack_hqr.hpp>
-#include <tlapack/lapack/eispack_hqr_schurToEigen.hpp>
+#include <tlapack/lapack/eispack_schurToEigen.hpp>
 #include <tlapack/lapack/multishift_qr.hpp>
 
 // Auxiliary routines

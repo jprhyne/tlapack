@@ -294,31 +294,33 @@ namespace tlapack
         // Now, we actually start porting the behavior
         // Constructing real sub diagonal elements
         for (idx_t i = low + 1; i <= igh; i++) {
-            l = (i + 1 < igh) ? (i + 1) : (igh);
+            idx_t l = (i + 1 < igh) ? (i + 1) : (igh);
             if (A(i,i-1).imag() == 0)
                 continue;
-            norm = sqrt(tlapack::abs(H(i,i-1)));
-            y = H(i, i - 1)/norm;
-            H(i, i - 1) = complex_t(norm, 0);
+            norm = sqrt(tlapack::abs(A(i,i-1)));
+            complex_t y = A(i, i - 1)/norm;
+            A(i, i - 1) = complex_t(norm, 0);
             for (idx_t j = i; j <= igh; j++)
-                H(i,j) = H(i,j) * conj(y);
+                A(i,j) = A(i,j) * conj(y);
             for (idx_t j = low; j <= l; j++)
-                H(j,i) = conj(H(j,i)) * y;
+                A(j,i) = conj(A(j,i)) * y;
         }
         // Store the isolated roots
         for (idx_t i = 0; i <= n - 1; i++)
             if (i < low || i > igh)
-                eigs[i] = H(i,i);
+                eigs[i] = A(i,i);
 
         complex_t s,x,y,zz;
+        idx_t l;
         idx_t en = igh;
         complex_t t = 0;
         idx_t itn = 30 * n;
         idx_t its = 0;
+        bool didQRStep = false;
         while (en >= low) {
             if (!didQRStep)
                 its = 0;
-            bool didQRStep = false;
+            didQRStep = false;
 
             // We want to check here if we have exhausted our iterations ie if itn == 0. If so, we immediately
             // terminate and return the index of failure
@@ -338,7 +340,7 @@ namespace tlapack
             // Update the number of iterations we have done so far
             its++;
             itn--;
-            eispack_comqr_qrIteration(A,en,l,s,x,y,zz,want_Q,low,igh,Q);
+            eispack_comqr_qrIteration(A,en,l,s,x,y,zz,eigs,want_Q,low,igh,Q);
             didQRStep = true;
         }
     }
