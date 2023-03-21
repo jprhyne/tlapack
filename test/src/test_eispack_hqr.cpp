@@ -60,7 +60,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     std::vector<T> A_; auto A = new_matrix( A_, n, n);
     std::vector<T> H_; auto H = new_matrix( H_, n, n);
     std::vector<T> Q_; auto Q = new_matrix( Q_, n, n);
-    auto s = std::vector<complex_t>(n);
+    std::vector<complex_t> s(n);
     //Populate A and U with random numbers
     for(idx_t i = 0; i < n; i++) {
         for(idx_t j = 0; j < n; j++) {
@@ -100,7 +100,6 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
         };
         opts.nmin = 15;
     
-        auto s = std::vector<complex_t>(n);
         retCode = multishift_qr(true, true, 0, n, H, s, Q, opts);
     } else {
         //Call hqr
