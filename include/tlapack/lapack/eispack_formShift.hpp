@@ -79,9 +79,7 @@ namespace tlapack
             s = complex_t(sr,rZero);
         } else {
             s = A(en,en);
-            real_t xr = A(en - 1, en).real() * A(en, en - 1).real();
-            real_t xi = A(en - 1, en).imag() * A(en, en - 1).real();
-            x = complex_t(xr,xi);
+            x = A(en,en-1).real() * A(en-1,en);
             if (x != cZero) {
                 y = (A(en - 1, en - 1) - s) / two;
                 zz = sqrt(y * y + x);
