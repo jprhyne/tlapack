@@ -53,6 +53,7 @@ add_executable( test_lauum test_lauum.cpp )
 add_executable( test_eispack_hqr test_eispack_hqr.cpp )
 add_executable( test_eispack_hqr_schurToEigen test_eispack_hqr_schurToEigen.cpp )
 add_executable( test_eispack_comqr_schurToEigen test_eispack_comqr_schurToEigen.cpp )
+add_executable( test_eispack_comqr test_eispack_comqr.cpp )
 
 if( TLAPACK_TEST_EIGEN )
   add_executable( test_eigenplugin test_eigenplugin.cpp )

@@ -83,7 +83,6 @@ namespace tlapack
         using complex_t = type_t<vector_t>;
         // Constants
         real_t zero = real_t(0);
-        real_t one = real_t(1);
 
         // Grab the number of columns of A, we only work on square matrices
         const idx_t n = ncols(A);
@@ -273,10 +272,6 @@ namespace tlapack
         using idx_t = size_type<matrix_t>;
         using real_t = real_type<TA>; 
         using complex_t = type_t<vector_t>;
-        // Constants
-        real_t zero = real_t(0);
-        real_t one = real_t(1);
-
         // Grab the number of columns of A, we only work on square matrices
         const idx_t n = ncols(A);
 
@@ -297,13 +292,18 @@ namespace tlapack
             idx_t l = (i + 1 < igh) ? (i + 1) : (igh);
             if (A(i,i-1).imag() == 0)
                 continue;
-            norm = sqrt(tlapack::abs(A(i,i-1)));
+            norm = tlapack::abs(A(i,i-1));
             complex_t y = A(i, i - 1)/norm;
             A(i, i - 1) = complex_t(norm, 0);
-            for (idx_t j = i; j <= igh; j++)
+            idx_t upperBound = (want_Q) ? (n - 1) : (igh);
+            for (idx_t j = i; j <= upperBound; j++)
                 A(i,j) = A(i,j) * conj(y);
-            for (idx_t j = low; j <= l; j++)
-                A(j,i) = conj(A(j,i)) * y;
+            idx_t lowerBound = (want_Q) ? (0) : (low);
+            for (idx_t j = lowerBound; j <= l; j++)
+                A(j,i) = A(j,i) * y;
+            if (want_Q) 
+                for (idx_t j = low; j <= igh; j++)
+                    Q(j,i) = Q(j,i) * y;
         }
         // Store the isolated roots
         for (idx_t i = 0; i <= n - 1; i++)
@@ -317,7 +317,7 @@ namespace tlapack
         idx_t itn = 30 * n;
         idx_t its = 0;
         bool didQRStep = false;
-        while (en >= low) {
+        while (en >= low && en <= igh) {
             if (!didQRStep)
                 its = 0;
             didQRStep = false;
@@ -333,6 +333,9 @@ namespace tlapack
             if (l == en) {
                 // Means we have found a root
                 eigs[en] = A(en,en) + t;
+                if (want_Q)
+                    A(en,en) = eigs[en];
+                en--;
                 continue;
             }
             // Compute the shift and do it on the diagonal of A. In addition, accumulate that shift
@@ -343,6 +346,7 @@ namespace tlapack
             eispack_comqr_qrIteration(A,en,l,s,x,y,zz,eigs,want_Q,low,igh,Q);
             didQRStep = true;
         }
+        return 0;
     }
 
 } // lapack

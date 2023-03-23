@@ -70,7 +70,7 @@ namespace tlapack
 
         for (idx_t l = en; l <= en && l > low; l--) {
             real_t tst1 = tlapack::abs(A(l-1,l-1).real()) + tlapack::abs(A(l-1,l-1).imag()) + tlapack::abs(A(l,l).real()) + tlapack::abs(A(l,l).imag());
-            real_t tst2 = tst1 + tlapack::abs(A(l,l - 1));
+            real_t tst2 = tst1 + tlapack::abs(A(l,l - 1).real());
             if (tst1 == tst2)
                 return l;
         }

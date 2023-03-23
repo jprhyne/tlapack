@@ -75,18 +75,20 @@ namespace tlapack
         // Compute our shift
         if (its > 0 && its % 10 == 0) {
             // Exceptional Shift
-            s = complex_t(tlapack::abs(A(en, en - 1).real()) + A(en - 1, en - 2).real(), rZero);
+            real_t sr = tlapack::abs(A(en, en - 1).real()) + tlapack::abs(A(en - 1, en - 2).real());
+            s = complex_t(sr,rZero);
         } else {
             s = A(en,en);
-            x = complex_t(A(en -1, en).real() * A(en, en - 1).real(), A(en -1, en).imag() * A(en, en - 1).imag());
+            real_t xr = A(en - 1, en).real() * A(en, en - 1).real();
+            real_t xi = A(en - 1, en).imag() * A(en, en - 1).real();
+            x = complex_t(xr,xi);
             if (x == cZero)
                 return 0;
             y = (A(en - 1, en - 1) - s) / two;
-            complex_t insideSqrt = complex_t(y.real() * y.real() - y.imag()*y.imag() + x.real(), two * y.real() * y.imag() + x.imag());
-            zz = sqrt(insideSqrt);
+            zz = sqrt(y * y + x);
             complex_t tst = y * conj(zz);
             if (tst.real() < rZero) {
-                zz *= -1;
+                zz = -zz;
             }
             x = x / (y + zz);
             s -= x;

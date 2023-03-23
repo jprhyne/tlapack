@@ -12,6 +12,7 @@
 #define TLAPACK_HQR_QRITERATION_HH
 
 #include <stdbool.h>
+#include "tlapack/lapack/lapy2.hpp"
 
 namespace tlapack
 {
@@ -153,10 +154,10 @@ namespace tlapack
         matrix_t &A,
         size_type<matrix_t> en,
         size_type<matrix_t> l,
-        real_type<type_t<matrix_t>> &s,
-        real_type<type_t<matrix_t>> &x,
-        real_type<type_t<matrix_t>> &y,
-        real_type<type_t<matrix_t>> &zz,
+        complex_type<type_t<matrix_t>> &s,
+        complex_type<type_t<matrix_t>> &x,
+        complex_type<type_t<matrix_t>> &y,
+        complex_type<type_t<matrix_t>> &zz,
         vector_t &eigs,
         bool want_Q,
         size_type<matrix_t> low,
@@ -168,7 +169,8 @@ namespace tlapack
         using real_t = real_type<TA>; 
         using complex_t = complex_type<TA>; 
 
-        real_t zero = real_t(0);
+        real_t rZero = real_t(0);
+        complex_t cZero = complex_t(0);
 
         // Grab the number of columns of A, we only work on square matrices
         const idx_t n = ncols(A);
@@ -179,44 +181,79 @@ namespace tlapack
 
         // Reduce to triangle (rows)
         for (idx_t i = l + 1; i <= en; i++) {
-            norm = sqrt(tlapack::abs(sqrt(tlapack::abs(A(i - 1, i - 1))) + A(i,i-1))); // This is ugly
+            s = complex_t(A(i, i - 1).real(), s.imag());
+            norm = lapy2(tlapack::abs(A(i - 1, i - 1)), s.real());
             x = A(i - 1, i - 1) / norm; // Never checks if A is the zero matrix...
             eigs[i-1] = x;
             A(i - 1, i - 1) = complex_t(norm,0);
-            A(i, i - 1) = complex_t(0, A(i, i-1).imag()/norm);
-            for (idx_t j = i; j <= en; j++) {
+            A(i, i - 1) = complex_t(0, s.real()/norm);
+            idx_t upperBound = (want_Q) ? (n - 1) : (en);
+            for (idx_t j = i; j <= upperBound; j++) {
                 y = A(i - 1, j);
                 zz = A(i,j);
-                A(i - 1, j) = x * conj(y) + complex_t(A(i, i -1).imag * zz.real(), A(i, i - 1).imag() * zz.imag());
-                A(i,j) = x * zz - complex_t(A(i, i - 1).imag() & y.real(), A(i, i - 1).imag() * y.imag());
+                real_t hr = x.real() * y.real() + x.imag() * y.imag() + A(i,i-1).imag() * zz.real();
+                real_t hi = x.real() * y.imag() - x.imag() * y.real() + A(i,i-1).imag() * zz.imag();
+                A(i-1,j) = complex_t(hr,hi);
+                hr = x.real() * zz.real() - x.imag() * zz.imag() - A(i,i-1).imag() * y.real();
+                hi = x.real() * zz.imag() + x.imag() * zz.real() - A(i,i-1).imag() * y.imag();
+                A(i,j) = complex_t(hr,hi);
+                //A(i,j) = x * zz - complex_t(A(i, i - 1).imag() * y.real(), A(i, i - 1).imag() * y.imag());
             }
         }
 
-        if (A(en, en) != 0) {
-            norm = sqrt(tlapack::abs(A(en,en)));
+        s = complex_t(s.real(), A(en,en).imag());
+        if (s.imag() != rZero) {
+            norm = tlapack::abs(A(en,en));
             s = A(en,en) / norm;
-            A(en,en) = complex_t(norm);
+            A(en,en) = complex_t(norm, rZero);
+            if (want_Q && en != n-1) {
+                for (idx_t j = en + 1; j < n; j++) {
+                    y = A(en,j);
+                    A(en,j) = s * conj(y);
+                }
+            }
         }
+
 
         // Inverse operation (columns)
         for (idx_t j = l + 1; j <= en; j++) {
             x = eigs[j - 1];
-            for (idx_t i = l; i <= j; i++) {
-                y = (i == j) ? (complex_t(A(i, j - 1).real(), 0)) : (A(i, j - 1));
+            idx_t lowerBound = (want_Q) ? (0) : (l);
+            for (idx_t i = lowerBound; i <= j; i++) {
+                y = (i == j) ? (complex_t(A(i,j-1).real(), 0)) : (A(i,j-1));
                 zz = A(i,j);
-                complex_t setVal = x * y + complex_t(A(j,j - 1).imag() * zz.real(), A(j,j - 1).imag() * zz.imag());
-                if ( i == j ) {
-                    A(i,j - 1) = complex_t(setVal.real(), A(i,j - 1).imag());
-                } else {
-                    A(i, j - 1) = setVal;
+                real_t hr = x.real() * y.real() - x.imag() * y.imag() + A(j,j-1).imag() * zz.real();
+                real_t hi = (i == j) ? (A(i,j-1).imag()) : (x.real() * y.imag() + x.imag() * y.real() + A(j,j-1).imag() * zz.imag());
+                A(i,j-1) = complex_t(hr,hi);
+                hr = x.real() * zz.real() + x.imag() * zz.imag() - A(j,j-1).imag() * y.real();
+                hi = x.real() * zz.imag() - x.imag() * zz.real() - A(j,j-1).imag() * y.imag();
+                A(i,j) = complex_t(hr,hi);
+            }
+            if (want_Q) {
+                for (idx_t i = low; i <= igh; i++) {
+                    y = Q(i,j-1);
+                    zz = Q(i,j);
+                    real_t zr = x.real() * y.real() - x.imag() * y.imag() + A(j,j-1).imag() * zz.real();
+                    real_t zi = x.real() * y.imag() + x.imag() * y.real() + A(j,j-1).imag() * zz.imag();
+                    Q(i,j-1) = complex_t(zr,zi);
+                    zr = x.real() * zz.real() + x.imag() * zz.imag() - A(j,j-1).imag() * y.real();
+                    zi = x.real() * zz.imag() - x.imag() * zz.real() - A(j,j-1).imag() * y.imag();
+                    Q(i,j) = complex_t(zr,zi);
                 }
-
-                A(i,j) = x * conj(zz) - complex_t(A(j,j - 1).imag() * y.real(), A(j, j - 1).imag() * y.imag());
             }
         }
-        if (s.imag() != 0) {
-            for (idx_t i = l; i <= en; i++) 
-                A(i,en) = s * A(i,en);
+        if (s.imag() != rZero) {
+            idx_t lowerBound = (want_Q) ? (0) : (l);
+            for (idx_t i = lowerBound; i <= en; i++) {
+                y = A(i,en);
+                A(i,en) = s * y;
+            }
+            if (want_Q) {
+                for (idx_t i = low; i <= igh; i++) {
+                    y = Q(i,en);
+                    Q(i,en) = s * y;
+                }
+            }
         }
         return 0;
     }
