@@ -84,7 +84,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_COM
     int retCode;
     //Call hqr
     real_t norm = real_t(0);
-    retCode = tlapack::eispack_comqr(H, ilo, igh, s, true, Q, norm);
+    retCode = tlapack::eispack_comqr(H, ilo, igh, s, true, true, Q, norm);
     CHECK(retCode == 0);
     // Getting here means that we have successfully ran all of 
     // hqr and got an answer, so now we check if our Schur vectors are correct

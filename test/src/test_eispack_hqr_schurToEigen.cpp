@@ -120,11 +120,9 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
         CHECK(retCode == 0);
     } else {
         //Call hqr
-        retCode = eispack_hqr(H, 0, n - 1, s, true, Z, norm);
-        //CHECK(retCode == 0);
+        retCode = eispack_hqr(H, 0, n - 1, s, true, true, Z, norm);
+        CHECK(retCode == 0);
     }
-    // TODO: Add a way to determine if we are testing real or complex numbers then 
-    // call hqr and comqr respectively
     // Getting here means that we have successfully ran all of hqr
     retCode = eispack_hqr_schurToEigen(H, 0, n - 1, s, Z, norm);
     CHECK(retCode == 0);
@@ -136,7 +134,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     // 2) Real numbers. This way treats our matrices as their real meanings. This is because
     //      even though we get complex eigenvalues, the real and imaginary parts represent a 
     //      kind of invariant subspace.
-    auto testingScheme = "Complex Multiplication";
+    auto testingScheme = "Complex Multiplication ";
     // If wanting to test with complex numbers
     if (testingScheme == "Complex Multiplication") {
         // Now, currently we are only testing matrices that are supposed to be diagonalizable

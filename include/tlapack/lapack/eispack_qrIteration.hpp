@@ -32,6 +32,7 @@ namespace tlapack
         real_type<type_t<matrix_t>> &r,
         real_type<type_t<matrix_t>> &zz,
         size_type<matrix_t> m,
+        bool want_T,
         bool want_Q,
         size_type<matrix_t> low,
         size_type<matrix_t> igh,
@@ -86,7 +87,7 @@ namespace tlapack
             q = q / p;
             r = r / p;
             if (notLast) {
-                idx_t upperBound = (want_Q) ? n - 1 : en;
+                idx_t upperBound = (want_T) ? n - 1 : en;
     //c     .......... row modification ..........
                 for (j = k; j <= upperBound; j++) {
                     p = A(k,j) + q * A(k+1,j) + r * A(k+2,j);
@@ -100,7 +101,7 @@ namespace tlapack
                     j = k+3;
                 }
     //c     .......... column modification ..........
-                idx_t lowerBound = (want_Q) ? 0 : l;
+                idx_t lowerBound = (want_T) ? 0 : l;
                 for (i = lowerBound; i <= j; i++) {
                     p = x * A(i,k) + y * A(i,k+1) + zz * A(i,k+2);
                     A(i,k) = A(i,k) - p;
@@ -118,7 +119,7 @@ namespace tlapack
                 }
             } else {
     //c     .......... row modification ..........
-                idx_t upperBound = (want_Q) ? n - 1 : en;
+                idx_t upperBound = (want_T) ? n - 1 : en;
                 for (j = k; j <= upperBound; j++) {
                     p = A(k,j) + q * A(k+1,j);
                     A(k,j) = A(k,j) - p * x;
@@ -130,7 +131,7 @@ namespace tlapack
                     j = k+3;
                 }
     //c     .......... column modification ..........
-                idx_t lowerBound = (want_Q) ? 0 : l;
+                idx_t lowerBound = (want_T) ? 0 : l;
                 for (i = lowerBound; i <= j; i++) {
                     p = x * A(i,k) + y * A(i,k+1);
                     A(i,k) = A(i,k) - p;
@@ -159,6 +160,7 @@ namespace tlapack
         complex_type<type_t<matrix_t>> &y,
         complex_type<type_t<matrix_t>> &zz,
         vector_t &eigs,
+        bool want_T,
         bool want_Q,
         size_type<matrix_t> low,
         size_type<matrix_t> igh,
@@ -188,7 +190,7 @@ namespace tlapack
             eigs[i-1] = x;
             A(i - 1, i - 1) = complex_t(norm,0);
             A(i, i - 1) = complex_t(0, s.real()/norm);
-            idx_t upperBound = (want_Q) ? (n - 1) : (en);
+            idx_t upperBound = (want_T) ? (n - 1) : (en);
             for (idx_t j = i; j <= upperBound; j++) {
                 y = A(i - 1, j);
                 zz = A(i,j);
@@ -202,7 +204,7 @@ namespace tlapack
             norm = tlapack::abs(A(en,en));
             s = A(en,en) / norm;
             A(en,en) = complex_t(norm, rZero);
-            if (want_Q && en != n-1) {
+            if (want_T && en != n-1) {
                 for (idx_t j = en + 1; j < n; j++) {
                     A(en,j) *= conj(s);
                 }
@@ -213,7 +215,7 @@ namespace tlapack
         // Inverse operation (columns)
         for (idx_t j = l + 1; j <= en; j++) {
             x = eigs[j - 1];
-            idx_t lowerBound = (want_Q) ? (0) : (l);
+            idx_t lowerBound = (want_T) ? (0) : (l);
             for (idx_t i = lowerBound; i <= j; i++) {
                 y = (i == j) ? (complex_t(A(i,j-1).real(), 0)) : (A(i,j-1));
                 zz = A(i,j);
@@ -235,7 +237,7 @@ namespace tlapack
             }
         }
         if (s.imag() != rZero) {
-            idx_t lowerBound = (want_Q) ? (0) : (l);
+            idx_t lowerBound = (want_T) ? (0) : (l);
             for (idx_t i = lowerBound; i <= en; i++) {
                 A(i,en) *= s;
             }

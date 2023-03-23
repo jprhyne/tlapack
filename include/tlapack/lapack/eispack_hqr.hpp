@@ -73,6 +73,7 @@ namespace tlapack
         size_type<matrix_t> low,
         size_type<matrix_t> igh,
         vector_t &eigs,
+        bool want_T,
         bool want_Q,
         matrix_t &Q,
         real_type<type_t<matrix_t>> &norm )
@@ -152,7 +153,7 @@ namespace tlapack
             x = A(en, en);
             if (l == en) {
                 // This means we found a single root
-                if (want_Q)
+                if (want_T)
                     A(en, en) = x + t;
                 eigs[en] = complex_t(x+t, zero);
                 en -= 1;
@@ -178,7 +179,7 @@ namespace tlapack
                 p = ( y - x ) / real_t(2.0);
                 q = p * p + w;
                 zz = sqrt(tlapack::abs(q));
-                if (want_Q) {
+                if (want_T) {
                     A(en,en) = x + t;
                     A(en - 1, en - 1) = y + t;
                 }
@@ -199,7 +200,7 @@ namespace tlapack
                     else
                         eigs[en] = complex_t(x - w/zz, zero);
                         
-                    if (want_Q) {
+                    if (want_T || want_Q) {
                         x = A(en, en - 1);
                         s = tlapack::abs(x) + tlapack::abs(zz);
                         p = x / s;
@@ -207,23 +208,27 @@ namespace tlapack
                         r = sqrt(p*p + q*q);
                         p = p / r;
                         q = q / r;
-                        // Row modifications
-                        for (j = en - 1; j < n; j++) {
-                            zz = A(en - 1, j);
-                            A(en - 1, j) = q * zz + p * A(en, j);
-                            A(en, j) = q * A(en, j) - p * zz;
-                        } 
-                        // Column modifications
-                        for ( i = 0; i <= en; i++) {
-                            zz = A(i, en - 1);
-                            A(i, en - 1) = q * zz + p * A(i, en);
-                            A(i, en) = q * A(i, en) - p * zz;
+                        if (want_T) {
+                            // Row modifications
+                            for (j = en - 1; j < n; j++) {
+                                zz = A(en - 1, j);
+                                A(en - 1, j) = q * zz + p * A(en, j);
+                                A(en, j) = q * A(en, j) - p * zz;
+                            } 
+                            // Column modifications
+                            for ( i = 0; i <= en; i++) {
+                                zz = A(i, en - 1);
+                                A(i, en - 1) = q * zz + p * A(i, en);
+                                A(i, en) = q * A(i, en) - p * zz;
+                            }
                         }
-                        // Accumulate transformations
-                        for ( i = low; i <= igh; i++) {
-                            zz = Q(i, en - 1);
-                            Q(i, en - 1) = q * zz + p * Q(i, en);
-                            Q(i, en) = q * Q(i, en) - p * zz;
+                        if (want_Q) {
+                            // Accumulate transformations
+                            for ( i = low; i <= igh; i++) {
+                                zz = Q(i, en - 1);
+                                Q(i, en - 1) = q * zz + p * Q(i, en);
+                                Q(i, en) = q * Q(i, en) - p * zz;
+                            }
                         }
                     }
                 }
@@ -241,7 +246,7 @@ namespace tlapack
                 itn -= 1;
                 m = eispack_hqr_doubleSubDiagonalSearch(A, en, l, s, x, y, w, p, q, r, zz);
                 // double qr step
-                eispack_hqr_qrIteration(A, en, l, s, x, y, p, q, r, zz, m, want_Q, low, igh, Q);
+                eispack_hqr_qrIteration(A, en, l, s, x, y, p, q, r, zz, m, want_T, want_Q, low, igh, Q);
                 didQRStep = true;    
             }
 
@@ -264,6 +269,7 @@ namespace tlapack
         size_type<matrix_t> low,
         size_type<matrix_t> igh,
         vector_t &eigs,
+        bool want_T,
         bool want_Q,
         matrix_t &Q,
         real_type<type_t<matrix_t>> &norm )
@@ -333,7 +339,7 @@ namespace tlapack
             if (l == en) {
                 // Means we have found a root
                 eigs[en] = A(en,en) + t;
-                if (want_Q)
+                if (want_T)
                     A(en,en) = eigs[en];
                 en--;
                 continue;
@@ -343,7 +349,7 @@ namespace tlapack
             // Update the number of iterations we have done so far
             its++;
             itn--;
-            eispack_comqr_qrIteration(A,en,l,s,x,y,zz,eigs,want_Q,low,igh,Q);
+            eispack_comqr_qrIteration(A,en,l,s,x,y,zz,eigs,want_T, want_Q,low,igh,Q);
             didQRStep = true;
         }
         return 0;

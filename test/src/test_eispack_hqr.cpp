@@ -103,7 +103,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_REA
     } else {
         //Call hqr
         real_t norm = real_t(zero);
-        retCode = tlapack::eispack_hqr(H, ilo, igh, s, true, Q, norm);
+        retCode = tlapack::eispack_hqr(H, ilo, igh, s, true, true, Q, norm);
     }
     CHECK(retCode == 0);
 
