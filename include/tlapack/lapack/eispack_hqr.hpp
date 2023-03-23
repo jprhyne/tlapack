@@ -36,7 +36,7 @@ namespace tlapack
      *  @param[in,out] A
      *      On input, A is our upper Hessenberg data matrix
      *      On output, 
-     *          if want_Q, then A is the quasi-Schur (block upper triangular) of the
+     *          if want_T, then A is the quasi-Schur (block upper triangular) of the
      *              original data matrix.
      *          if !want_Q, then A is destroyed and has no meaning
      *  @param[in] low
@@ -45,10 +45,10 @@ namespace tlapack
      *  @param[in] igh
      *      the upper bound of the indices we are considering. A must be upper triangular from
      *          columns igh:(ncols(A)-1). If this is unknown, choose ncols(A) - 1.
-     *  @param[out] wr
-     *      The real parts of the eigenvalues of A
-     *  @param[out] wi
-     *      The imaginary parts of the eigenvalues of A
+     *  @param[out] eigs
+     *      vector containing the eigenvalues of A
+     *  @param[in] want_T
+     *      boolean value determining if we want A to be it's Schur form on exit
      *  @param[in] want_Q
      *      boolean value determining if the Schur vectors (stored in Q) are desired
      *  @param[in,out] Q
@@ -69,12 +69,12 @@ namespace tlapack
                 int> = 0
                 >
     int eispack_hqr(
-        matrix_t &A,
-        size_type<matrix_t> low,
-        size_type<matrix_t> igh,
-        vector_t &eigs,
         bool want_T,
         bool want_Q,
+        size_type<matrix_t> low,
+        size_type<matrix_t> igh,
+        matrix_t &A,
+        vector_t &eigs,
         matrix_t &Q,
         real_type<type_t<matrix_t>> &norm )
     {
@@ -111,7 +111,7 @@ namespace tlapack
             for (j = (i == 0) ? (i):(i-1); j < n; j++) {
                 norm += tlapack::abs(A(i,j));
             }
-            if (i >= low && i <= igh)
+            if (i >= low && i < igh)
                 continue;
             eigs[i] = complex_t(A(i,i), zero);
         }
@@ -123,7 +123,7 @@ namespace tlapack
         //      why it works
         // itn is the total number of QR iterations we allow for the entire matrix
         //      The heuristic chosen was 30 * n
-        en = igh;
+        en = igh - 1;
         t = zero;
         itn = 30 * n;
 
@@ -131,7 +131,7 @@ namespace tlapack
         // set a flag to determine if we did a QR step, and if so we
         // reset its to be 0 as we have found another eigenvalue
         bool didQRStep = false;
-        while (en >= low && en <= igh) {
+        while (en >= low && en < igh) {
             if (!didQRStep)
                 its = 0;
             didQRStep = false;
@@ -224,7 +224,7 @@ namespace tlapack
                         }
                         if (want_Q) {
                             // Accumulate transformations
-                            for ( i = low; i <= igh; i++) {
+                            for ( i = low; i < igh; i++) {
                                 zz = Q(i, en - 1);
                                 Q(i, en - 1) = q * zz + p * Q(i, en);
                                 Q(i, en) = q * Q(i, en) - p * zz;
@@ -254,9 +254,43 @@ namespace tlapack
         return 0;
     }
 
-    /*
-     * Note: We do not actually use the norm value here,
-     * however we keep it in the interface to make it the same as above
+    /**
+     *  @brief Computes the eigenvalues of the complex upper Hessenberg matrix A and optionally the Schur Vectors
+     *
+     *  comqr takes in a real upper Hessenberg matrix A and computes the eigenvalues of it, and then if desired
+     *  we also compute the quasi-Schur form of A ie, we find Q,T s.t. A = Q * T * Q^T.
+     *  On termination, A will be destroyed so if further computations are needed based on the
+     *  original matrix A, it must be stored beforehand.
+     *
+     *  @tparam matrix_t the type of matrix of A, must be complex
+     *  @tparam vector_t the type of vector that we are storing the eigenvalues in. Must be complex
+     *
+     *  @param[in,out] A
+     *      On input, A is our upper Hessenberg data matrix
+     *      On output, 
+     *          if want_T, then A is the Schur  of the original data matrix.
+     *          if !want_Q, then A is destroyed and has no meaning
+     *  @param[in] low
+     *      The lower bound of the indices we are considering. A must be upper triangular from 
+     *          columns 0:low. If this is unknown then choose 0.
+     *  @param[in] igh
+     *      the upper bound of the indices we are considering. A must be upper triangular from
+     *          columns igh:(ncols(A)-1). If this is unknown, choose ncols(A) - 1.
+     *  @param[out] eigs
+     *      Eigenvalues of A
+     *  @param[in] want_T
+     *      boolean value determining if we want A to contain its Schur form at the end
+     *  @param[in] want_Q
+     *      boolean value determining if the Schur vectors (stored in Q) are desired
+     *  @param[in,out] Q
+     *      On input: Q must either be the identity matrix or a unitary similarity transformation on some
+     *          matrix to get A. IE, starting with B, A and Q must satisfy B = Q*A*Q^T like the
+     *          Hessenberg reduction
+     *      On output: If Q was eye(ncols(A)), then Q contains the Schur vectors of A.
+     *          If Q was a similarity transformation, then the new Q will contain the 
+     *          Schur vectors of the original B (see on input for what B is)
+     *  @param norm
+     *      This is not actually used in the complex case, it is kept for interface consistency
      */
     template <class matrix_t, 
              class vector_t,
@@ -265,12 +299,12 @@ namespace tlapack
                 int> = 0
                 >
     int eispack_comqr(
-        matrix_t &A,
-        size_type<matrix_t> low,
-        size_type<matrix_t> igh,
-        vector_t &eigs,
         bool want_T,
         bool want_Q,
+        size_type<matrix_t> low,
+        size_type<matrix_t> igh,
+        matrix_t &A,
+        vector_t &eigs,
         matrix_t &Q,
         real_type<type_t<matrix_t>> &norm )
     {
@@ -294,36 +328,36 @@ namespace tlapack
 
         // Now, we actually start porting the behavior
         // Constructing real sub diagonal elements
-        for (idx_t i = low + 1; i <= igh; i++) {
-            idx_t l = (i + 1 < igh) ? (i + 1) : (igh);
+        for (idx_t i = low + 1; i < igh; i++) {
+            idx_t l = (i + 1 < igh - 1) ? (i + 1) : (igh - 1);
             if (A(i,i-1).imag() == 0)
                 continue;
             norm = tlapack::abs(A(i,i-1));
             complex_t y = A(i, i - 1)/norm;
             A(i, i - 1) = complex_t(norm, 0);
-            idx_t upperBound = (want_Q) ? (n - 1) : (igh);
+            idx_t upperBound = (want_T) ? (n - 1) : (igh - 1);
             for (idx_t j = i; j <= upperBound; j++)
                 A(i,j) = A(i,j) * conj(y);
-            idx_t lowerBound = (want_Q) ? (0) : (low);
+            idx_t lowerBound = (want_T) ? (0) : (low);
             for (idx_t j = lowerBound; j <= l; j++)
                 A(j,i) = A(j,i) * y;
             if (want_Q) 
-                for (idx_t j = low; j <= igh; j++)
+                for (idx_t j = low; j < igh; j++)
                     Q(j,i) = Q(j,i) * y;
         }
         // Store the isolated roots
         for (idx_t i = 0; i <= n - 1; i++)
-            if (i < low || i > igh)
+            if (i < low || i >= igh)
                 eigs[i] = A(i,i);
 
         complex_t s,x,y,zz;
         idx_t l;
-        idx_t en = igh;
+        idx_t en = igh - 1;
         complex_t t = 0;
         idx_t itn = 30 * n;
         idx_t its = 0;
         bool didQRStep = false;
-        while (en >= low && en <= igh) {
+        while (en >= low && en < igh) {
             if (!didQRStep)
                 its = 0;
             didQRStep = false;

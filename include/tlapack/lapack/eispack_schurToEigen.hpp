@@ -215,14 +215,14 @@ namespace tlapack
         // In our testing we do nothing with this, however this is kept in the event
         // that balance or a similar function is ported and/or used
         for (idx_t i = 0; i < n; i++) {
-            if (i >= low && i <= igh) continue;
+            if (i >= low && i < igh) continue;
             for (idx_t j = i; j < n; j++)
                 Z(i,j) = U(i,j);
         }
         // This may be able to be refactored into smarter matrix multiplication
         for (idx_t j = n - 1; j >= low && j <= n - 1; j--) {
-            m = (j <= igh) ? (j) : (igh);
-            for (idx_t i = low; i <= igh; i++) {
+            m = (j < igh) ? (j) : (igh - 1);
+            for (idx_t i = low; i < igh; i++) {
                 zz = zero;
                 for (idx_t k = low; k <= m; k++) 
                     zz = zz + Z(i,k) * U(k,j);
@@ -320,14 +320,14 @@ namespace tlapack
         // In our testing we do nothing with this, however this is kept in the event
         // that balance or a similar function is ported and/or used
         for (idx_t i = 0; i < n; i++) {
-            if (i >= low && i <= igh) continue;
+            if (i >= low && i < igh) continue;
             for (idx_t j = i; j < n; j++)
                 Z(i,j) = U(i,j);
         }
         // This may be able to be refactored into smarter matrix multiplication
         for (idx_t j = n - 1; j >= low && j <= n - 1; j--) {
-            idx_t m = (j <= igh) ? (j) : (igh);
-            for (idx_t i = low; i <= igh; i++) {
+            idx_t m = (j < igh) ? (j) : (igh - 1);
+            for (idx_t i = low; i < igh; i++) {
                 zz = cZero;
                 for (idx_t k = low; k <= m; k++) 
                     zz = zz + Z(i,k) * U(k,j);

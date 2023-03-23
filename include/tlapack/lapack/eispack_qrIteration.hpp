@@ -110,7 +110,7 @@ namespace tlapack
                 }
                 if (want_Q) {
     //c     .......... accumulate transformations  ..........
-                    for (i = low; i <= igh; i++) {
+                    for (i = low; i < igh; i++) {
                         p = x * Q(i,k) + y * Q(i,k+1) + zz * Q(i,k+2);
                         Q(i,k) = Q(i,k) - p;
                         Q(i, k + 1) = Q(i,k + 1) - p * q;
@@ -139,7 +139,7 @@ namespace tlapack
                 }
                 if (want_Q) {
     //c     ...........accumulate transformations  ..........
-                    for (i = low; i <= igh; i++) {
+                    for (i = low; i < igh; i++) {
                         p = x * Q(i,k) + y * Q(i,k+1);
                         Q(i,k) = Q(i,k) - p;
                         Q(i, k + 1) = Q(i,k+1) - p * q;
@@ -228,7 +228,7 @@ namespace tlapack
                 A(i,j) = conj(x) * zz - A(j,j-1).imag() * y;
             }
             if (want_Q) {
-                for (idx_t i = low; i <= igh; i++) {
+                for (idx_t i = low; i < igh; i++) {
                     y = Q(i,j-1);
                     zz = Q(i,j);
                     Q(i,j-1) = x * y + A(j,j-1).imag() * zz;
@@ -242,7 +242,7 @@ namespace tlapack
                 A(i,en) *= s;
             }
             if (want_Q) {
-                for (idx_t i = low; i <= igh; i++) {
+                for (idx_t i = low; i < igh; i++) {
                     Q(i,en) *= s;
                 }
             }

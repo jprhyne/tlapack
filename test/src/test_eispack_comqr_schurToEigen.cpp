@@ -120,7 +120,7 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_COM
         CHECK(retCode == 0);
     } else {
         //Call hqr
-        retCode = eispack_comqr(H, 0, n - 1, s, true, true, Z, norm);
+        retCode = eispack_comqr(true, true, 0, n - 1, H, s, Z, norm);
         CHECK(retCode == 0);
     }
     // call hqr and comqr respectively

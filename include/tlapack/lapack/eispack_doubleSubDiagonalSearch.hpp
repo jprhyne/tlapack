@@ -16,7 +16,10 @@
 namespace tlapack
 {
     /** 
-     * TODO: Determine what this function does
+     * This function searches for an index m such that 
+     * when we introduce the bulge in our QR step, our 
+     * sub diagonal elements stay close to zero. This is
+     * a part of the "decoupling" criteria.
      */
     template <class matrix_t>
     int eispack_hqr_doubleSubDiagonalSearch(
@@ -43,6 +46,9 @@ namespace tlapack
         tlapack_check(n == nrows(A));
 
         idx_t m;
+        /*
+         * [p q r] is our householder reflector scaled down to be much smaller
+         */
         for (m = en - 2; m <= en && m >= l; m--) {
             zz = A(m,m);
             r = x - zz;
@@ -54,10 +60,10 @@ namespace tlapack
             p = p / s;
             q = q / s;
             r = r / s;
-            if (m == l) break;
+            if (m == l) break; // We can't go past l anyway, so we stop.
             real_t tst1 = tlapack::abs(p) * (tlapack::abs(A(m-1, m-1)) + tlapack::abs(zz) + tlapack::abs(A(m+1,m+1)));
             real_t tst2 = tst1 + tlapack::abs(A(m,m-1)) * (tlapack::abs(q) + tlapack::abs(r));
-            if (tst1 == tst2) break;
+            if (tst1 == tst2) break; // Means the sub diagonal elements are "small", so m is our desired index
 
         }
         for (idx_t i = m + 2; i <= en; i++) {

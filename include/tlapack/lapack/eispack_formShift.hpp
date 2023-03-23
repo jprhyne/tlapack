@@ -52,6 +52,10 @@ namespace tlapack
 
     }
 
+    /**
+     *  @brief perform a form shift on A
+     *
+     */
     template <class matrix_t>
     int eispack_comqr_formShift(
         size_type<matrix_t> low,
