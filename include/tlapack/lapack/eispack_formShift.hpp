@@ -82,16 +82,16 @@ namespace tlapack
             real_t xr = A(en - 1, en).real() * A(en, en - 1).real();
             real_t xi = A(en - 1, en).imag() * A(en, en - 1).real();
             x = complex_t(xr,xi);
-            if (x == cZero)
-                return 0;
-            y = (A(en - 1, en - 1) - s) / two;
-            zz = sqrt(y * y + x);
-            complex_t tst = y * conj(zz);
-            if (tst.real() < rZero) {
-                zz = -zz;
+            if (x != cZero) {
+                y = (A(en - 1, en - 1) - s) / two;
+                zz = sqrt(y * y + x);
+                complex_t tst = y * conj(zz);
+                if (y.real() * zz.real() + y.imag() * zz.imag() < rZero) {
+                    zz = -zz;
+                }
+                x = x / (y + zz);
+                s = s - x;
             }
-            x = x / (y + zz);
-            s -= x;
         }
         // Perform the shift
         for (idx_t i = low; i <= en; i++)

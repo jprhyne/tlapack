@@ -197,7 +197,6 @@ namespace tlapack
                 hr = x.real() * zz.real() - x.imag() * zz.imag() - A(i,i-1).imag() * y.real();
                 hi = x.real() * zz.imag() + x.imag() * zz.real() - A(i,i-1).imag() * y.imag();
                 A(i,j) = complex_t(hr,hi);
-                //A(i,j) = x * zz - complex_t(A(i, i - 1).imag() * y.real(), A(i, i - 1).imag() * y.imag());
             }
         }
 
@@ -209,7 +208,7 @@ namespace tlapack
             if (want_Q && en != n-1) {
                 for (idx_t j = en + 1; j < n; j++) {
                     y = A(en,j);
-                    A(en,j) = s * conj(y);
+                    A(en,j) = conj(s) * y;
                 }
             }
         }
@@ -251,7 +250,9 @@ namespace tlapack
             if (want_Q) {
                 for (idx_t i = low; i <= igh; i++) {
                     y = Q(i,en);
-                    Q(i,en) = s * y;
+                    real_t zr = s.real() * y.real() - s.imag() * y.imag();
+                    real_t zi = s.real() * y.imag() + s.imag() * y.real();
+                    Q(i,en) = complex_t(zr,zi);
                 }
             }
         }
