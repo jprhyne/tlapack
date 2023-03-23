@@ -81,12 +81,6 @@ TEMPLATE_TEST_CASE("schur form is backwards stable", "[hqr][schur]", TLAPACK_COM
     real_t sim_res_norm = check_similarity_transform(A,Q,H);
     real_t normA = lange(tlapack::frob_norm, A);
     CHECK(sim_res_norm < tol * normA);
-    //--------------------------------------------------------------
-    lacpy(Uplo::General, H,A);
-    for (idx_t i = 0; i < n; i++)
-        for (idx_t j = 0; j < n; j++)
-            Q(i,j) = (i == j) ? complex_t(1,0) : complex_t(0,0);
-    //--------------------------------------------------------------
     int retCode;
     //Call hqr
     real_t norm = real_t(0);
