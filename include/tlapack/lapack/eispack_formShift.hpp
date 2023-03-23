@@ -86,7 +86,7 @@ namespace tlapack
                 y = (A(en - 1, en - 1) - s) / two;
                 zz = sqrt(y * y + x);
                 complex_t tst = y * conj(zz);
-                if (y.real() * zz.real() + y.imag() * zz.imag() < rZero) {
+                if (tst.real() < rZero) {
                     zz = -zz;
                 }
                 x = x / (y + zz);

@@ -181,6 +181,7 @@ namespace tlapack
 
         // Reduce to triangle (rows)
         for (idx_t i = l + 1; i <= en; i++) {
+            // Update the real part of s.
             s = complex_t(A(i, i - 1).real(), s.imag());
             norm = lapy2(tlapack::abs(A(i - 1, i - 1)), s.real());
             x = A(i - 1, i - 1) / norm; // Never checks if A is the zero matrix...
@@ -191,12 +192,8 @@ namespace tlapack
             for (idx_t j = i; j <= upperBound; j++) {
                 y = A(i - 1, j);
                 zz = A(i,j);
-                real_t hr = x.real() * y.real() + x.imag() * y.imag() + A(i,i-1).imag() * zz.real();
-                real_t hi = x.real() * y.imag() - x.imag() * y.real() + A(i,i-1).imag() * zz.imag();
-                A(i-1,j) = complex_t(hr,hi);
-                hr = x.real() * zz.real() - x.imag() * zz.imag() - A(i,i-1).imag() * y.real();
-                hi = x.real() * zz.imag() + x.imag() * zz.real() - A(i,i-1).imag() * y.imag();
-                A(i,j) = complex_t(hr,hi);
+                A(i-1, j) = conj(x) * y + A(i,i-1).imag() * zz;
+                A(i,j) = x * zz - A(i,i-1).imag() * y;
             }
         }
 
@@ -207,8 +204,7 @@ namespace tlapack
             A(en,en) = complex_t(norm, rZero);
             if (want_Q && en != n-1) {
                 for (idx_t j = en + 1; j < n; j++) {
-                    y = A(en,j);
-                    A(en,j) = conj(s) * y;
+                    A(en,j) *= conj(s);
                 }
             }
         }
@@ -221,38 +217,31 @@ namespace tlapack
             for (idx_t i = lowerBound; i <= j; i++) {
                 y = (i == j) ? (complex_t(A(i,j-1).real(), 0)) : (A(i,j-1));
                 zz = A(i,j);
-                real_t hr = x.real() * y.real() - x.imag() * y.imag() + A(j,j-1).imag() * zz.real();
-                real_t hi = (i == j) ? (A(i,j-1).imag()) : (x.real() * y.imag() + x.imag() * y.real() + A(j,j-1).imag() * zz.imag());
-                A(i,j-1) = complex_t(hr,hi);
-                hr = x.real() * zz.real() + x.imag() * zz.imag() - A(j,j-1).imag() * y.real();
-                hi = x.real() * zz.imag() - x.imag() * zz.real() - A(j,j-1).imag() * y.imag();
-                A(i,j) = complex_t(hr,hi);
+                // Since we only want to update the imaginary part if we store the
+                // old value and then force it to be this value
+                real_t tmp = A(i,j-1).imag();
+                A(i,j-1) = x * y + A(j,j-1).imag() * zz;
+                if (i == j)
+                    A(i,j-1) = complex_t(A(i,j-1).real(), tmp);
+                A(i,j) = conj(x) * zz - A(j,j-1).imag() * y;
             }
             if (want_Q) {
                 for (idx_t i = low; i <= igh; i++) {
                     y = Q(i,j-1);
                     zz = Q(i,j);
-                    real_t zr = x.real() * y.real() - x.imag() * y.imag() + A(j,j-1).imag() * zz.real();
-                    real_t zi = x.real() * y.imag() + x.imag() * y.real() + A(j,j-1).imag() * zz.imag();
-                    Q(i,j-1) = complex_t(zr,zi);
-                    zr = x.real() * zz.real() + x.imag() * zz.imag() - A(j,j-1).imag() * y.real();
-                    zi = x.real() * zz.imag() - x.imag() * zz.real() - A(j,j-1).imag() * y.imag();
-                    Q(i,j) = complex_t(zr,zi);
+                    Q(i,j-1) = x * y + A(j,j-1).imag() * zz;
+                    Q(i,j) = conj(x) * zz - A(j,j-1).imag() * y;
                 }
             }
         }
         if (s.imag() != rZero) {
             idx_t lowerBound = (want_Q) ? (0) : (l);
             for (idx_t i = lowerBound; i <= en; i++) {
-                y = A(i,en);
-                A(i,en) = s * y;
+                A(i,en) *= s;
             }
             if (want_Q) {
                 for (idx_t i = low; i <= igh; i++) {
-                    y = Q(i,en);
-                    real_t zr = s.real() * y.real() - s.imag() * y.imag();
-                    real_t zi = s.real() * y.imag() + s.imag() * y.real();
-                    Q(i,en) = complex_t(zr,zi);
+                    Q(i,en) *= s;
                 }
             }
         }
