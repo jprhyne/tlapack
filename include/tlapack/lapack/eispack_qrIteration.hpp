@@ -12,10 +12,6 @@
 #define TLAPACK_HQR_QRITERATION_HH
 
 #include <stdbool.h>
-<<<<<<< Updated upstream
-=======
-#include "tlapack/lapack/lapy3.hpp"
->>>>>>> Stashed changes
 #include "tlapack/lapack/lapy2.hpp"
 
 namespace tlapack
@@ -189,13 +185,9 @@ namespace tlapack
 
         // Reduce to triangle (rows)
         for (idx_t i = l + 1; i <= en; i++) {
-<<<<<<< Updated upstream
             // Update the real part of s.
             s = complex_t(A(i, i - 1).real(), s.imag());
             norm = lapy2(tlapack::abs(A(i - 1, i - 1)), s.real());
-=======
-            norm = tlapack::lapy3(A(i-1,i-1).real(), A(i-1,i-1).imag(), A(i,i-1));
->>>>>>> Stashed changes
             x = A(i - 1, i - 1) / norm; // Never checks if A is the zero matrix...
             eigs[i-1] = x;
             A(i - 1, i - 1) = complex_t(norm,0);
@@ -209,13 +201,9 @@ namespace tlapack
             }
         }
 
-<<<<<<< Updated upstream
         s = complex_t(s.real(), A(en,en).imag());
         if (s.imag() != rZero) {
-=======
-        if (A(en, en) != 0) {
             // should handle overflows
->>>>>>> Stashed changes
             norm = tlapack::abs(A(en,en));
             s = A(en,en) / norm;
             A(en,en) = complex_t(norm, rZero);
