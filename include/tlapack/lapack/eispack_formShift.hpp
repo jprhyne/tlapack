@@ -83,6 +83,7 @@ namespace tlapack
             s = complex_t(sr,rZero);
         } else {
             s = A(en,en);
+<<<<<<< Updated upstream
             x = A(en,en-1).real() * A(en-1,en);
             if (x != cZero) {
                 y = (A(en - 1, en - 1) - s) / two;
@@ -93,6 +94,18 @@ namespace tlapack
                 }
                 x = x / (y + zz);
                 s = s - x;
+=======
+            x = complex_t(A(en -1, en).real() * A(en, en - 1).real(), A(en -1, en).imag() * A(en, en - 1).imag());
+            if (x == cZero)
+                return 0;
+            y = (A(en - 1, en - 1) - s) / two;
+            //complex_t insideSqrt = y * y + x;
+            //complex_t insideSqrt = complex_t(y.real() * y.real() - y.imag()*y.imag() + x.real(), two * y.real() * y.imag() + x.imag());
+            zz = sqrt(y*y + x);
+            complex_t tst = y * conj(zz);
+            if (tst.real() < rZero) {
+                zz = -zz;
+>>>>>>> Stashed changes
             }
         }
         // Perform the shift
