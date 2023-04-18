@@ -15,14 +15,15 @@ namespace tlapack
 {
     /**
      * @brief search for the first (coming from the bottom) index where there is a small subdiagonal element of A
+     *
+     * This function searches for an index l that determines
      */
     template <class matrix_t>
     int eispack_hqr_subDiagonalSearch(
         size_type<matrix_t> low,
         matrix_t &A,
         size_type<matrix_t> en,
-        real_type<type_t<matrix_t>> norm,
-        real_type<type_t<matrix_t>> &s )
+        real_type<type_t<matrix_t>> norm )
     {
         using TA = type_t<matrix_t>;
         using idx_t = size_type<matrix_t>;
@@ -38,7 +39,7 @@ namespace tlapack
 
 
         for (idx_t l = en; l <= en && l > low; l--) {
-            s = tlapack::abs(A(l - 1, l - 1)) + tlapack::abs(A(l, l));
+            real_t s = tlapack::abs(A(l - 1, l - 1)) + tlapack::abs(A(l, l));
             if (s == zero)
                 s = norm;
             real_t tst1 = s;

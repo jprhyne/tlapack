@@ -55,7 +55,6 @@ namespace tlapack
         for (k = m; k <= en - 1; k++) {
             notLast = k != en - 1;
             if (k != m) {
-                // "Chasing the bulge". zeroing out q and r with p 
                 p = A(k,k-1);
                 q = A(k+1,k-1);
                 r = zero;
@@ -70,17 +69,17 @@ namespace tlapack
                 q = q / x;
                 r = r / x;
             }
-            // Householder vector construction
+            // Householder vector(?) construction
             real_t insideSqrt = p * p + q * q + r * r;
             if (p >= zero) {
                 s = sqrt(insideSqrt);
             } else {
                 s = -sqrt(insideSqrt);
             }
-            if (k != m) {
+            if (k != m) { // not the first iteration
                 A(k,k-1) = -s * x;
             } else if (l != m) {
-                A(k,k-1) = -A(k,k-1);
+                A(k,k-1) = -A(k,k-1); // We found a non-trivial m
             }
             p = p + s;
             x = p / s;
@@ -88,9 +87,24 @@ namespace tlapack
             zz = r / s;
             q = q / p;
             r = r / p;
+
+            // At this point, we have the vectors
+            // [ 1 q r], and [x y z].
+            // The former is the scaled version of our vector we are finding the householder
+            //  reflector 
+            // The latter is the householder vector with associated householder
+            // matrix P_0 = I - [x y zz]^T [1 q r]
+            // Through some algebra, we see that we can rewrite this as
+            //
+            // P_0 = I - 1/(p+s) [p + s, q, r]^T [p + s, q, r]
+            // Which is EXACTLY the output of Algorithm 1.1 of Stewart's
+            // Matrix Algorithms Vol: I. (Page 257).
+            //
+            // As far as why? Likely saving some computations as doing p+s 
+            // twice is needless addition if we can avoid it.
             if (notLast) {
                 idx_t upperBound = (want_T) ? n - 1 : en;
-    //c     .......... row modification ..........
+                //c     .......... row modification ..........
                 for (j = k; j <= upperBound; j++) {
                     p = A(k,j) + q * A(k+1,j) + r * A(k+2,j);
                     A(k,j) = A(k,j) - p * x;
@@ -105,7 +119,9 @@ namespace tlapack
     //c     .......... column modification ..........
                 idx_t lowerBound = (want_T) ? 0 : l;
                 for (i = lowerBound; i <= j; i++) {
+                    // Apply [x y zz] to the i^th row of A
                     p = x * A(i,k) + y * A(i,k+1) + zz * A(i,k+2);
+                    // Apply [1 q r] to the i^th row
                     A(i,k) = A(i,k) - p;
                     A(i,k+1) = A(i,k+1) - p * q;
                     A(i,k+2) = A(i,k+2) - p * r;

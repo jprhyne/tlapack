@@ -15,7 +15,7 @@
 #include <functional>
 
 #include "tlapack/lapack/eispack_subDiagonalSearch.hpp"
-#include "tlapack/lapack/eispack_formShift.hpp"
+#include "tlapack/lapack/eispack_singleShift.hpp"
 #include "tlapack/lapack/eispack_doubleSubDiagonalSearch.hpp"
 #include "tlapack/lapack/eispack_qrIteration.hpp"
 
@@ -97,8 +97,6 @@ namespace tlapack
             tlapack_check((n == ncols(Q)));
         }
 
-        // Consider adding some checks for trivial cases if needed
-
         // Now, we actually start porting the behavior
 
         // Initialize some variables at the beginning.
@@ -130,8 +128,14 @@ namespace tlapack
         // This is a hack that we can possibly refactor out. We
         // set a flag to determine if we did a QR step, and if so we
         // reset its to be 0 as we have found another eigenvalue
+        // and its determines how many iterations we have done on a particular eigenvalue
         bool didQRStep = false;
+        // upper bound is to prevent underflow when using an unsigned
+        // indexing variable
         while (en >= low && en < igh) {
+            // If we found an eigenvalue last iteration, then we reset its 
+            // as this represent the number of iterations used to find the 
+            // enth eigenvalue
             if (!didQRStep)
                 its = 0;
             didQRStep = false;
@@ -147,21 +151,27 @@ namespace tlapack
 
             // Perform a subdiagonal search to determine where the first
             // small subdiagonal element is
-            l = eispack_hqr_subDiagonalSearch(low,A,en,norm,s);
+            l = eispack_hqr_subDiagonalSearch(low,A,en,norm);
             // Check to see if we found eigenvalues based on l from the subDiagonalSearch
-            // if not, perform our form shift
+            // if not, check if we perform our exceptional shift 
+            // or not.
+            
+            // We store this value as we will collect shifts from exceptional shift
+            // that will be used later. 
             x = A(en, en);
             if (l == en) {
                 // This means we found a single root
+                // If we want the Schur Form of A, then we set the diagonal elements
                 if (want_T)
                     A(en, en) = x + t;
                 eigs[en] = complex_t(x+t, zero);
                 en -= 1;
                 foundEigenValue = true;
             } else {
-                // Since in the old behavior this
-                // is only done if we have not
-                // found a single root
+                // Finish storing the information needed to compute our eigenvalues in the case of
+                // a double root (either real or complex)
+                // Regardless, this will inform our shifting behavior done inside our QR step and our
+                // double sub diagonal search (computing the first column of Q)
                 y = A(en - 1, en - 1);
                 w = A(en, en - 1) * A(en - 1, en);
             }
@@ -170,12 +180,9 @@ namespace tlapack
             // Even if en - 1 underflows we would have l = 0 which is not the maximal value for any 
             // reasonable unsigned data type
             if (l  == en - 1) {
-                // This means we found a double root
                 // We have found a double root, so we need to now
                 // determine if it's a complex or real pair then modify A and Q
-                // if Q is desired. (Note we only compute the Schur 
-                // form of A if Q is desired. This may be modifiable if 
-                // desired)
+                // if T or Q are desired.
                 p = ( y - x ) / real_t(2.0);
                 q = p * p + w;
                 zz = sqrt(tlapack::abs(q));
@@ -200,6 +207,7 @@ namespace tlapack
                     else
                         eigs[en] = complex_t(x - w/zz, zero);
                         
+                    // Schur vectors
                     if (want_T || want_Q) {
                         x = A(en, en - 1);
                         s = tlapack::abs(x) + tlapack::abs(zz);
@@ -238,13 +246,18 @@ namespace tlapack
             if (!foundEigenValue) {
                 // This is performing an "exceptional"
                 // shift, so we sometimes perform a single
-                // shift if we are exceptionally unlucky. We do an extra single shift.
+                // shift if we are exceptionally unlucky.
+                // NOTE: This program still works without this
+                // So this is separate theory from the plain HQR 
+                // algorithm
                 if (its % 10 == 0 && its > 0)
-                    eispack_hqr_formShift(low, A, en, s, t, x, y, w);
+                    eispack_hqr_exceptionalShift(low, A, en, t, x, y, w);
                 // We only do a QR step if we did not find an eigenvalue
                 its += 1;
                 itn -= 1;
-                m = eispack_hqr_doubleSubDiagonalSearch(A, en, l, s, x, y, w, p, q, r, zz);
+                // Computing householder vector that would reduce the first column of Q for the 
+                // bottom active subwindow. 
+                m = eispack_hqr_doubleSubDiagonalSearch(A, en, l, x, y, w, p, q, r);
                 // double qr step
                 eispack_hqr_qrIteration(A, en, l, s, x, y, p, q, r, zz, m, want_T, want_Q, low, igh, Q);
                 didQRStep = true;    
@@ -379,7 +392,7 @@ namespace tlapack
                 continue;
             }
             // Compute the shift and do it on the diagonal of A. In addition, accumulate that shift
-            eispack_comqr_formShift(low, A, its, en, s, t, x, y, zz);
+            eispack_comqr_singleShift(low, A, its, en, s, t, x, y, zz);
             // Update the number of iterations we have done so far
             its++;
             itn--;

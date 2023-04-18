@@ -1,4 +1,4 @@
-/// @file eispack_hqr_formshift.hpp
+/// @file eispack_hqr_singleshift.hpp
 /// @author Johnathan Rhyne, CU Denver, USA
 /// Adapted from @see https://netlib.org/eispack/hqr2.f
 //
@@ -16,13 +16,14 @@ namespace tlapack
     /**
      *  @brief perform a form shift on A
      *
+     *  This
+     *
      */
     template <class matrix_t>
-    int eispack_hqr_formShift(
+    int eispack_hqr_exceptionalShift(
         size_type<matrix_t> low,
         matrix_t &A,
         size_type<matrix_t> en,
-        real_type<type_t<matrix_t>> &s,
         real_type<type_t<matrix_t>> &t,
         real_type<type_t<matrix_t>> &x,
         real_type<type_t<matrix_t>> &y,
@@ -41,10 +42,10 @@ namespace tlapack
         // Perform the checks for our arguments
         tlapack_check(n == nrows(A));
 
-        t += x;
+        t += A(en,en);
         for (idx_t i = low; i <= en; i++)
-            A(i,i) = A(i,i) -  x;
-        s = tlapack::abs(A(en, en - 1)) + tlapack::abs(A(en - 1, en - 2));
+            A(i,i) = A(i,i) - A(en,en);
+        real_t s = tlapack::abs(A(en, en - 1)) + tlapack::abs(A(en - 1, en - 2));
         x = constant1 * s;
         y = x;
         w = constant2 * s * s;
@@ -57,7 +58,7 @@ namespace tlapack
      *
      */
     template <class matrix_t>
-    int eispack_comqr_formShift(
+    int eispack_comqr_singleShift(
         size_type<matrix_t> low,
         matrix_t &A,
         size_type<matrix_t> its,
